@@ -1,0 +1,1584 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ZO 記帳">
+<meta name="application-name" content="ZO 記帳">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#171717">
+<meta name="description" content="ZO &amp; FRIENDS 家用記帳，可離線使用並備份帳務與照片。">
+<title>ZO &amp; FRIENDS 記帳</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --primary:#ec6f72;
+  --primary-dark:#d85559;
+  --primary-light:#fbdadb;
+  --accent:#2f9e88;
+  --accent-light:#d7f0ea;
+  --bg:#f6f5f3;
+  --card:#ffffff;
+  --surface:#ffffff;      /* 浮在底色上的輸入框、按鈕 */
+  --track:#efefee;        /* 分段控制、進度軌道 */
+  --text:#2c2c2c;
+  --text-dim:#7c7573;
+  --border:#ececec;
+  --danger:#d2444a;
+  --header-from:#ec6f72;
+  --header-mid:#f2999b;
+  --banner-bg:#fff4d6;
+  --banner-text:#7a5f14;
+  --accent-text:#1f6e5e;
+  --toast-bg:#2c2c2c;
+  --toast-text:#ffffff;
+  --radius:16px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+/* 深色：中性色帶一點主色的紅調，不是純灰；主色與強調色都提亮以維持對比 */
+@media (prefers-color-scheme: dark){
+  :root{
+    --primary:#f2878a;
+    --primary-dark:#f7a5a7;
+    --primary-light:#4a2f31;
+    --accent:#5fc9b3;
+    --accent-light:#1e3b36;
+    --bg:#191617;
+    --card:#241f21;
+    --surface:#2e2729;
+    --track:#332b2d;
+    --text:#ece7e6;
+    --text-dim:#a29896;
+    --border:#3a3234;
+    --danger:#f0787e;
+    --header-from:#a8464a;
+    --header-mid:#7d3a3d;
+    --banner-bg:#3d3320;
+    --banner-text:#f0d78c;
+    --accent-text:#8fdcc8;
+    --toast-bg:#efe9e8;
+    --toast-text:#1d1a1b;
+  }
+}
+/* 檢視器的主題切換按鈕必須蓋過系統設定，兩個方向都要 */
+:root[data-theme="dark"]{
+  --primary:#f2878a; --primary-dark:#f7a5a7; --primary-light:#4a2f31;
+  --accent:#5fc9b3; --accent-light:#1e3b36;
+  --bg:#191617; --card:#241f21; --surface:#2e2729; --track:#332b2d;
+  --text:#ece7e6; --text-dim:#a29896; --border:#3a3234; --danger:#f0787e;
+  --header-from:#a8464a; --header-mid:#7d3a3d;
+  --banner-bg:#3d3320; --banner-text:#f0d78c; --accent-text:#8fdcc8;
+  --toast-bg:#efe9e8; --toast-text:#1d1a1b;
+}
+:root[data-theme="light"]{
+  --primary:#ec6f72; --primary-dark:#d85559; --primary-light:#fbdadb;
+  --accent:#2f9e88; --accent-light:#d7f0ea;
+  --bg:#f6f5f3; --card:#ffffff; --surface:#ffffff; --track:#efefee;
+  --text:#2c2c2c; --text-dim:#7c7573; --border:#ececec; --danger:#d2444a;
+  --header-from:#ec6f72; --header-mid:#f2999b;
+  --banner-bg:#fff4d6; --banner-text:#7a5f14; --accent-text:#1f6e5e;
+  --toast-bg:#2c2c2c; --toast-text:#ffffff;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Helvetica Neue",Arial,sans-serif;
+  overscroll-behavior-y:contain;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;background:var(--bg);}
+.header{position:relative;color:#fff;}
+.hero-header{padding:0;overflow:hidden;aspect-ratio:420/245;min-height:220px;max-height:280px;
+  background:#fff;border-bottom:3px solid #171717;}
+.hero-art{width:100%;height:100%;display:block;object-fit:cover;object-position:52% 47%;}
+.hero-brand{position:absolute;left:16px;top:15px;padding:8px 13px;background:#050505;color:#fff;
+  border:3px solid #fff;border-radius:12px;box-shadow:3px 3px 0 #f4d340;transform:rotate(-1.5deg);
+  font-size:17px;font-weight:700;letter-spacing:1px;white-space:nowrap;}
+.hero-brand span{color:#f0a3bd;}
+.hero-date{position:absolute;right:14px;top:16px;padding:6px 10px;background:#f4d340;color:#151515;
+  border:3px solid #151515;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.5px;
+  transform:rotate(2deg);white-space:nowrap;}
+.main{flex:1;padding:0 14px calc(96px + var(--safe-bottom));margin-top:-16px;}
+@media(max-width:360px){
+  .hero-brand{left:12px;top:12px;padding:7px 10px;font-size:15px;}
+  .hero-date{right:10px;top:13px;padding:5px 8px;font-size:11.5px;}
+}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;}
+.summary-card{padding:18px 18px 14px;}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.month-nav button{background:var(--primary-light);border:none;color:var(--primary-dark);width:34px;height:34px;border-radius:50%;font-size:19px;font-weight:700;line-height:1;}
+.month-nav .month-label{font-size:16px;font-weight:700;color:var(--text);}
+.summary-row{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;color:var(--text-dim);}
+.summary-row .val{font-weight:700;font-size:16px;}
+.summary-row.income .val{color:var(--accent);}
+.summary-row.expense .val{color:var(--danger);}
+.summary-row.net .val{font-size:19px;}
+.summary-row.net{border-top:1px solid var(--border);margin-top:4px;padding-top:10px;}
+.pos{color:var(--accent);} .neg{color:var(--danger);}
+.day-group{margin-bottom:10px;}
+.day-header{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);padding:10px 4px 6px;font-weight:600;}
+.tx-item{display:flex;align-items:center;background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.tx-icon{width:38px;height:38px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:19px;margin-right:12px;flex-shrink:0;}
+.tx-item.income .tx-icon{background:var(--accent-light);}
+.tx-body{flex:1;min-width:0;}
+.tx-cat{font-size:14.5px;font-weight:600;}
+.tx-note{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.tx-amt{font-weight:700;font-size:15.5px;white-space:nowrap;margin-left:8px;}
+.empty-state{text-align:center;color:var(--text-dim);padding:50px 20px;font-size:14px;line-height:1.8;}
+.empty-state .big{font-size:40px;display:block;margin-bottom:6px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:12px;
+  padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;}
+.btn-primary{background:var(--primary);color:#fff;width:100%;}
+.btn-outline{background:var(--surface);color:var(--primary);border:1.5px solid var(--primary);width:100%;}
+.btn-ghost{background:var(--bg);color:var(--text);width:100%;}
+.btn-danger{background:var(--surface);color:var(--danger);border:1.5px solid var(--danger);width:100%;}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* bottom nav */
+.tabbar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--card);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:8px 0 calc(8px + var(--safe-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.06);z-index:20;}
+.tab-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+  color:var(--text-dim);font-size:10.5px;padding:4px 14px;}
+.tab-btn.active{color:var(--primary);font-weight:700;}
+.tab-btn .icon{font-size:20px;}
+.fab{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:28px;
+  border:none;box-shadow:0 4px 14px rgba(236,111,114,.5);margin-top:-30px;display:flex;align-items:center;justify-content:center;}
+
+/* modal / sheet */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:var(--bg);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;
+  padding:14px 16px calc(24px + var(--safe-bottom));animation:up .2s ease-out;}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 12px;}
+.sheet-title{font-size:16px;font-weight:700;text-align:center;margin-bottom:14px;}
+.type-toggle{display:flex;background:var(--track);border-radius:12px;padding:3px;margin-bottom:16px;}
+.type-toggle button{flex:1;border:none;background:none;padding:10px;border-radius:10px;font-weight:700;font-size:14px;color:var(--text-dim);}
+.type-toggle button.active{background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.type-toggle button.active.expense{color:var(--danger);}
+.type-toggle button.active.income{color:var(--accent);}
+.amount-input-wrap{display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:12px;
+  padding:14px;margin-bottom:16px;border:1.5px solid var(--border);}
+.amount-input-wrap .cur{font-size:22px;color:var(--text-dim);margin-right:4px;}
+.amount-input-wrap input{border:none;outline:none;font-size:30px;font-weight:700;width:100%;text-align:right;background:none;color:var(--text);}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.cat-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:10px 2px;font-size:11px;color:var(--text);}
+.cat-btn .ic{font-size:21px;}
+.cat-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);font-weight:700;}
+.field-row{display:flex;gap:10px;margin-bottom:12px;}
+.field{flex:1;}
+.field label{font-size:12px;color:var(--text-dim);margin-bottom:5px;display:block;font-weight:600;}
+.field input[type=date],.field input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:14px;background:var(--surface);color:var(--text);}
+.quick-date{display:flex;gap:8px;}
+.quick-date button{flex:1;border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:9px;font-size:12.5px;color:var(--text-dim);}
+.quick-date button.active{border-color:var(--primary);color:var(--primary);font-weight:700;background:var(--primary-light);}
+.sheet-actions{display:flex;gap:10px;margin-top:6px;}
+
+/* stats */
+.seg{display:flex;background:var(--track);border-radius:12px;padding:3px;margin-bottom:14px;}
+.seg button{flex:1;border:none;background:none;padding:9px;border-radius:10px;font-weight:700;font-size:13px;color:var(--text-dim);}
+.seg button.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.bar-row{margin-bottom:12px;}
+.bar-row .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;}
+.bar-row .top .lbl{display:flex;align-items:center;gap:6px;font-weight:600;}
+.bar-row .top .amt{color:var(--text-dim);}
+.bar-track{height:9px;background:var(--track);border-radius:5px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;background:var(--primary);}
+.bar-fill.income{background:var(--accent);}
+.trend-chart{display:flex;align-items:flex-end;gap:10px;height:150px;padding:10px 4px 0;}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.trend-bars{display:flex;align-items:flex-end;gap:3px;height:100%;}
+.trend-bars .b{width:11px;border-radius:3px 3px 0 0;}
+.trend-bars .b.income{background:var(--accent);}
+.trend-bars .b.expense{background:var(--danger);}
+.trend-col .lbl{font-size:10.5px;color:var(--text-dim);margin-top:6px;}
+.legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--text-dim);margin-top:10px;}
+.legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+table.yr{width:100%;border-collapse:collapse;font-size:13px;}
+table.yr th,table.yr td{padding:8px 4px;text-align:right;border-bottom:1px solid var(--border);}
+table.yr th:first-child,table.yr td:first-child{text-align:left;}
+table.yr th{color:var(--text-dim);font-weight:600;font-size:12px;}
+
+/* settings */
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;border-bottom:1px solid var(--border);}
+.settings-item:last-child{border-bottom:none;}
+.settings-item .lbl{font-size:14.5px;font-weight:600;}
+.settings-item .desc{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+.settings-section-title{font-size:12.5px;color:var(--text-dim);font-weight:700;margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.5px;}
+.backup-ok{background:var(--accent-light);color:var(--accent-text);}
+.howto{background:var(--track);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:12.5px;color:var(--text-dim);line-height:1.7;}
+.howto-row{display:flex;gap:8px;align-items:flex-start;margin-top:7px;color:var(--text);}
+.howto-ic{flex-shrink:0;font-size:15px;line-height:1.4;}
+.backup-banner{background:var(--banner-bg);color:var(--banner-text);border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.hidden-file{display:none;}
+.photo-row{display:flex;gap:8px;flex-wrap:wrap;}
+.photo-thumb{position:relative;width:68px;height:68px;border-radius:10px;overflow:hidden;background:var(--track);flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.photo-add{width:68px;height:68px;border-radius:10px;border:1.5px dashed var(--primary);background:var(--primary-light);
+  color:var(--primary-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex-shrink:0;}
+.tx-cam{font-size:11px;color:var(--text-dim);margin-left:5px;}
+.photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:80;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.photo-viewer img{max-width:96%;max-height:82%;object-fit:contain;}
+.photo-viewer .close{margin-top:16px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:20px;padding:10px 26px;font-size:14px;font-weight:700;}
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-text);
+  padding:10px 18px;border-radius:20px;font-size:13px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.offline-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(100%,480px);z-index:120;
+  padding:calc(7px + env(safe-area-inset-top,0px)) 12px 7px;background:#171717;color:#fff;text-align:center;
+  font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+</style>
+</head>
+<body>
+<div id="offlineBanner" class="offline-banner" hidden>目前離線，仍可照常記帳；恢復網路後會自動更新 App。</div>
+<div id="app"></div>
+<input type="file" id="importFile" class="hidden-file" accept=".csv,text/csv">
+<input type="file" id="restoreFile" class="hidden-file" accept=".json,.zip,application/json,application/zip">
+<input type="file" id="photoFile" class="hidden-file" accept="image/*" multiple>
+<script>
+/* ---------------- 資料模型 ---------------- */
+const CAT_ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAABOCAMAAADPTmKkAAAAYFBMVEWQj40AAAD8/PweHBxgXl7w3GGvXpFKaKVcUyyXkGeTkZIeGxxhX2Ccm5xnY2aJXHQYGBhcNU46V45FMDUkMU7GuFY3RFZeXV4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACF7S97AAAAGHRSTlP+AP/9/f/+////lKJgYaT/WP///P///zRppslqAAAFeElEQVR42rWaibqjKgyA00m04IJ6rO37v+kNiwiCaJeb83VjlN+EEEIYuL0hLeKoyIjgF4639wWuXvhShOQFWJhIQKhb2+b1Y+DI/cKhaG2xbdWvgGxJUcBZkYY6fgVULT91q20GF8UNa6/vbN4EjmCHDFHCG0KkxtbcidRdB4JxEPhE5DbahM1VIH4GS9XtrwFfCD8ScQ3Y0K+A1F4C4s+AA8EVIP0MCImr5oHRwH9HxO4CcAiux9T10Mq1R9kHnywwDB20jyV+gtLBUMfPWAACdG7aTNvUxR0O4d8meaKMbjowKf8LhxeaWvN7JB+Pd9YMcYfE8DEJc07TDTRNXTfX9TDBOi8oCW6E/3ZCeBjeyN2S81LCmlGo3+tJuQUp4xMJT6uoV2B+l/txdKt1LtK8poFJMM0aWJMzqcxYKgWug5rMHpL6Ubp88CZDCoBtfmgoBW5a5yZJJnZrIFjgMJiPOhPapOkN4V9JckA8ADqUwdbeScOppxc5LPLYqudhxpkUaQNOuFOQ7FxgN6ATIKYDL9sscJwCIF+CkXrgTXYGpCRQAObXQ8V+CtZlcOcyJwMXmdS8xeN/tB4CzlbLubv1NJQ980Qid7Vuw8NSNz6Arl80Uhu0+0zBIBhEKo63XmszrFPEA289q6mXy9DbCN/nJSqCMd6gbgrqPl6eev2rp68supsfGmjnG+I0THOfroddeDl8C2SbWiDiYKJLCow0/AQYxxziOWAjip0G/wNwp6FqsA7kBEjfOg3TVQiEzBjSl4O4y0q617zxqDkBXtXRXMsfadrBSRQOQeAsm9TlYKynzqvW/JDlqWO6++2bpRQi2SkzsLVeM8yocmkiYJL1VVUl4r6XpVqqSmIoQl+37BcpDjWvSQdpBa8o0OTzbg3knll0l2aV8n2zzGhSDNdomiSluT40TV9IhJv4jtl0vlgghX1XFZjGCLirBkgs7C2sur3AKEMk4TX0sjigDO0sE6DOFY52T43yQyZ0zsdWc6kw4da3tiBsCq5Dy2oy1bYEWwFbI2hV0wM0SikzJVZg33WuRELeVyRpOq2Ds/lktQn61iW4iratB6fCJjp3XUOQGcPNq9E/K1oXWaw6QlahxI3Cskx2nN/NwL58kds3ueGpFhCzqHaySJb1Owapt8zmignQ2SGav/VcXZNwDg9OxzLQmjTZWGCiFxtvSdrijZozUgHYNa3RLN1p0ur0G4/nvFgS3n47KfSbgiwQqFE6Z2MZsuVCuQTq6eeaQ8U5jgqqMd0NY8uf6jjSUKZQaUaDi7JiEDpAC61Ibc3Fv6Rum4We8XdM998m3e9RHYa2zK4Wo6lsx9dbb2uC3MOiOikqjJTZz+aUpmwbntWi4GRxMo89QELUuynKGT51uLYIbDHBUWjVLffYb3odKrVGeeInHVPw+EWZyT9KaVsK+2L6cXX58Qx8JvCXp19HrpQUY2B/XEckfN7/+O/+eD64d/16Pqz8sTxLFUg8BJbuet69/Dm5B03Pi1VTKCRsO+Aj7P/vzk33Dfl4fAJssHhEsOHuYBNk+BJ4K7pigNuqDOCUfD5/D4R/xobgt/Kkkc6uZQ3pCFgsuQrwef0aO02NQ6ueCdtXgK8iENesKKzkrWUVwN9rSJJylWdnXbxY946BbfHM7vgwj4oHR4VIU5r5J9H0mCjp9hmQTk7yrtX1d0CFH/LSBezienh42+nyREc1/pMU46hQf35smScinOU0eHr2UZipqX7q9OxppNI5xBlxV5FIeLkdcOgfujY/v3HeFSZz+qj92pHsa72NCN8+C0b0p2Ht9UNnc1CN9OnBsy3Lv948x+8+Pzhs+A+at//jQN942Xril5N1e2K+23qEJrmvt/6g5/8ACFJAuRXnW0sAAAAASUVORK5CYII=';
+const STORAGE_KEY = 'homeLedger_v1';
+const BACKUP_KEY = 'homeLedger_lastBackup';
+const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
+const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
+const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
+const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
+
+const EXPENSE_CATS = [
+  {key:'food', label:'餐飲', icon:'🍜'},
+  {key:'kids_family', label:'孩子孝親', icon:'👶'},
+  {key:'transport', label:'交通', icon:'🚗'},
+  {key:'grocery', label:'生活採買', icon:'🛒'},
+  {key:'debt_card', label:'貸款卡費', icon:'💳'},
+  {key:'social', label:'交際娛樂', icon:'🎉'},
+  {key:'beauty', label:'愛美治裝', icon:'👗'},
+  {key:'housing', label:'居住雜支', icon:'🏠'},
+  {key:'insurance_tax', label:'保險稅金', icon:'📋'},
+  {key:'medical', label:'醫療保健', icon:'⚕️'},
+  {key:'education', label:'教育', icon:'📚'},
+  {key:'rent_loan', label:'房租房貸', icon:'🏢'},
+  {key:'work', label:'工作雜支', icon:'💼'},
+  {key:'other', label:'其他', icon:'📦'},
+];
+const INCOME_CATS = [
+  {key:'salary', label:'薪資', icon:'💰'},
+  {key:'bonus', label:'獎金', icon:'🎁'},
+  {key:'other_income', label:'其他收入', icon:'➕'},
+];
+const ALL_CATS = [...EXPENSE_CATS, ...INCOME_CATS];
+function catInfo(key){ return ALL_CATS.find(c=>c.key===key) || {key, label:key, icon:'❓'}; }
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { transactions: [] };
+}
+function saveData(data=db){
+  // 儲存空間滿了要「大聲」報錯，不能靜靜失敗，否則她會以為記到了但其實沒存進去。
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
+  }catch(e){
+    alert('⚠️ 儲存失敗：這支手機給網頁的儲存空間可能已經滿了。\n\n請先到「設定」把資料匯出備份，再清理不需要的舊資料。\n\n這次操作沒有寫入，原本儲存的資料不會改變。');
+    return false;
+  }
+}
+function uid(){
+  return 'tx_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+let db = loadData();
+let deferredInstallPrompt = null;
+
+/* ---------------- 照片儲存（IndexedDB） ----------------
+   照片不能放 localStorage（上限只有 5MB），所以另外開 IndexedDB。
+   存進去之前一律先壓縮，收據看得清楚就好，不需要原始畫質。 */
+const PHOTO_DB = 'homeLedgerPhotos';
+const PHOTO_STORE = 'photos';
+let _photoDB = null;
+
+function openPhotoDB(){
+  if(_photoDB) return Promise.resolve(_photoDB);
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(PHOTO_DB, 1);
+    req.onupgradeneeded = ()=>{
+      const idb = req.result;
+      if(!idb.objectStoreNames.contains(PHOTO_STORE)) idb.createObjectStore(PHOTO_STORE);
+    };
+    req.onsuccess = ()=>{ _photoDB = req.result; resolve(_photoDB); };
+    req.onerror = ()=> reject(req.error);
+  });
+}
+function photoPut(id, blob){
+  return openPhotoDB().then(idb=> new Promise((res,rej)=>{
+    const tx = idb.transaction(PHOTO_STORE,'readwrite');
+    tx.objectStore(PHOTO_STORE).put(blob, id);
+    tx.oncomplete = ()=>res(true);
+    tx.onerror = ()=>rej(tx.error);
+  }));
+}
+function photoGet(id){
+  return openPhotoDB().then(idb=> new Promise((res,rej)=>{
+    const tx = idb.transaction(PHOTO_STORE,'readonly');
+    const r = tx.objectStore(PHOTO_STORE).get(id);
+    r.onsuccess = ()=>res(r.result || null);
+    r.onerror = ()=>rej(r.error);
+  }));
+}
+function photoDelete(id){
+  return openPhotoDB().then(idb=> new Promise((res)=>{
+    const tx = idb.transaction(PHOTO_STORE,'readwrite');
+    tx.objectStore(PHOTO_STORE).delete(id);
+    tx.oncomplete = ()=>res(true);
+    tx.onerror = ()=>res(false);
+  }));
+}
+function photoAllKeys(){
+  return openPhotoDB().then(idb=> new Promise((res)=>{
+    const tx = idb.transaction(PHOTO_STORE,'readonly');
+    const r = tx.objectStore(PHOTO_STORE).getAllKeys();
+    r.onsuccess = ()=>res(r.result||[]);
+    r.onerror = ()=>res([]);
+  }));
+}
+
+/* 壓縮：長邊縮到 1600px、JPEG 品質 0.72。
+   收據原圖約 3MB，壓完通常 150~350KB，省下約 90% 空間但字仍看得清楚。 */
+function compressImage(file){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      const MAX = 1600;
+      let {width:w, height:h} = img;
+      if(Math.max(w,h) > MAX){
+        const s = MAX/Math.max(w,h);
+        w = Math.round(w*s); h = Math.round(h*s);
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      cv.toBlob(b=>{
+        URL.revokeObjectURL(url);
+        if(b) resolve(b); else reject(new Error('壓縮失敗'));
+      }, 'image/jpeg', 0.72);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('讀取圖片失敗')); };
+    img.src = url;
+  });
+}
+function photoId(){ return 'ph_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+// 設定頁要顯示照片數量與佔用空間，但讀 IndexedDB 是非同步的，
+// 所以先放這裡，載入完再重畫一次。
+let photoStats = { count:0, bytes:0, oldCount:0, oldBytes:0 };
+async function refreshPhotoStats(){
+  try{
+    const keys = await photoAllKeys();
+    const oldPhotoIds = new Set(
+      db.transactions
+        .filter(t=>t.date < oneYearAgoStr())
+        .flatMap(t=>Array.isArray(t.photos)?t.photos:[])
+    );
+    let bytes = 0, oldBytes = 0, oldCount = 0;
+    for(const k of keys){
+      const b = await photoGet(k);
+      if(b){
+        bytes += b.size;
+        if(oldPhotoIds.has(k)){ oldBytes += b.size; oldCount++; }
+      }
+    }
+    photoStats = { count: keys.length, bytes, oldCount, oldBytes };
+    if(state.view === 'settings') render();
+  }catch(e){ /* 沒有照片或不支援就維持 0 */ }
+}
+
+/* ---------------- 狀態 ---------------- */
+const now = new Date();
+let state = {
+  view: 'home',            // home | stats | settings
+  month: now.getFullYear()*100 + (now.getMonth()+1), // e.g. 202608
+  modalOpen: false,
+  editId: null,
+  form: null,
+  statsTab: 'expense',
+};
+
+function ymKey(dateStr){ const d=new Date(dateStr+'T00:00:00'); return d.getFullYear()*100+(d.getMonth()+1); }
+function fmtYM(ym){ return `${Math.floor(ym/100)}年${String(ym%100).padStart(2,'0')}月`; }
+function fmtMoney(n){ n = Math.round(n); return (n<0?'-':'') + '$' + Math.abs(n).toLocaleString('en-US'); }
+function localDateStr(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayStr(){ return localDateStr(new Date()); }
+function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return localDateStr(d); }
+function oneYearAgoStr(reference=new Date()){
+  const y = reference.getFullYear()-1;
+  const m = reference.getMonth();
+  const maxDay = new Date(y, m+1, 0).getDate();
+  return localDateStr(new Date(y, m, Math.min(reference.getDate(), maxDay)));
+}
+function isValidDateString(value){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y,m,d] = value.split('-').map(Number);
+  const parsed = new Date(y, m-1, d);
+  return parsed.getFullYear()===y && parsed.getMonth()===m-1 && parsed.getDate()===d;
+}
+function weekdayLabel(dateStr){
+  const days=['週日','週一','週二','週三','週四','週五','週六'];
+  const d=new Date(dateStr+'T00:00:00');
+  return days[d.getDay()];
+}
+
+/* ---------------- Render root ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  app.querySelectorAll('img[data-object-url="1"]').forEach(img=>{
+    if(img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  });
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="main">${
+      state.view==='home' ? renderHome() :
+      state.view==='stats' ? renderStats() :
+      renderSettings()
+    }</div>
+    ${renderTabbar()}
+    ${state.modalOpen ? renderModal() : ''}
+  `;
+  attachEvents();
+}
+
+function renderHeader(){
+  const now = new Date();
+  const weekday = ['SUN','MON','TUE','WED','THU','FRI','SAT'][now.getDay()];
+  return `<div class="header hero-header">
+    <img class="hero-art" src="daisy-cat-hero.jpg" alt="灰色厭世貓與小雛菊">
+    <div class="hero-brand">Z<span>✿</span> &amp; FRIENDS</div>
+    <div class="hero-date">${now.getFullYear()} · ${weekday}</div>
+  </div>`;
+}
+
+/* ---------------- Home ---------------- */
+function txInMonth(ym){
+  return db.transactions.filter(t => ymKey(t.date) === ym);
+}
+function renderHome(){
+  const txs = txInMonth(state.month).sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
+  const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const net = income - expense;
+
+  const groups = {};
+  txs.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
+  const dateKeys = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  let listHtml = '';
+  if(dateKeys.length===0){
+    listHtml = `<div class="empty-state"><span class="big">🐣</span>這個月還沒有紀錄<br>點右下角 + 開始記帳吧</div>`;
+  } else {
+    listHtml = dateKeys.map(d=>{
+      const dayTxs = groups[d];
+      const dayNet = dayTxs.reduce((s,t)=> s + (t.type==='income'?t.amount:-t.amount), 0);
+      const items = dayTxs.map(t=>{
+        const c = catInfo(t.category);
+        const localPhotos = Array.isArray(t.photos) ? t.photos.length : 0;
+        const archivedPhotos = Number(t.archivedPhotoCount)||0;
+        const photoBadges = `${localPhotos?`<span class="tx-cam">📷${localPhotos>1?localPhotos:''}</span>`:''}${archivedPhotos?`<span class="tx-cam">☁️${archivedPhotos}</span>`:''}`;
+        return `<div class="tx-item ${t.type}" data-id="${t.id}">
+          <div class="tx-icon">${c.icon}</div>
+          <div class="tx-body">
+            <div class="tx-cat">${c.label}${photoBadges}</div>
+            ${t.note ? `<div class="tx-note">${escapeHtml(t.note)}</div>` : ''}
+          </div>
+          <div class="tx-amt ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmtMoney(t.amount)}</div>
+        </div>`;
+      }).join('');
+      return `<div class="day-group">
+        <div class="day-header"><span>${d.slice(5).replace('-','/')}（${weekdayLabel(d)}）</span><span class="${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+':''}${fmtMoney(dayNet)}</span></div>
+        ${items}
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    <div class="card summary-card">
+      <div class="month-nav">
+        <button data-act="prevMonth">‹</button>
+        <div class="month-label">${fmtYM(state.month)}</div>
+        <button data-act="nextMonth">›</button>
+      </div>
+      <div class="summary-row income"><span>收入</span><span class="val">${fmtMoney(income)}</span></div>
+      <div class="summary-row expense"><span>支出</span><span class="val">${fmtMoney(expense)}</span></div>
+      <div class="summary-row net"><span>結餘</span><span class="val ${net>=0?'pos':'neg'}">${net>=0?'+':''}${fmtMoney(net)}</span></div>
+    </div>
+    ${listHtml}
+  `;
+}
+
+/* ---------------- Stats ---------------- */
+function renderStats(){
+  const type = state.statsTab;
+  const txs = txInMonth(state.month).filter(t=>t.type===type);
+  const total = txs.reduce((s,t)=>s+t.amount,0);
+  const cats = type==='expense'?EXPENSE_CATS:INCOME_CATS;
+  const byCat = {};
+  txs.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + t.amount; });
+  const rows = cats.map(c=>({...c, amt: byCat[c.key]||0}))
+    .filter(c=>c.amt>0)
+    .sort((a,b)=>b.amt-a.amt);
+
+  const barsHtml = rows.length===0
+    ? `<div class="empty-state">這個月還沒有${type==='expense'?'支出':'收入'}資料</div>`
+    : rows.map(c=>{
+      const pct = total? (c.amt/total*100) : 0;
+      return `<div class="bar-row">
+        <div class="top"><span class="lbl">${c.icon} ${c.label}</span><span class="amt">${fmtMoney(c.amt)}（${pct.toFixed(0)}%）</span></div>
+        <div class="bar-track"><div class="bar-fill ${type}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+
+  // trend: last 6 months including current
+  const months = [];
+  let y = Math.floor(state.month/100), m = state.month%100;
+  for(let i=5;i>=0;i--){
+    let mm = m - i, yy = y;
+    while(mm<=0){ mm+=12; yy-=1; }
+    months.push(yy*100+mm);
+  }
+  const trendData = months.map(ym=>{
+    const t = txInMonth(ym);
+    return {
+      ym,
+      income: t.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0),
+      expense: t.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0),
+    };
+  });
+  const maxVal = Math.max(1, ...trendData.map(d=>Math.max(d.income,d.expense)));
+  const trendHtml = trendData.map(d=>`
+    <div class="trend-col">
+      <div class="trend-bars">
+        <div class="b income" style="height:${d.income/maxVal*100}%" title="收入 ${fmtMoney(d.income)}"></div>
+        <div class="b expense" style="height:${d.expense/maxVal*100}%" title="支出 ${fmtMoney(d.expense)}"></div>
+      </div>
+      <div class="lbl">${d.ym%100}月</div>
+    </div>`).join('');
+
+  // yearly summary
+  const years = {};
+  db.transactions.forEach(t=>{
+    const y2 = t.date.slice(0,4);
+    years[y2] = years[y2] || {income:0, expense:0};
+    years[y2][t.type] += t.amount;
+  });
+  const yearRows = Object.keys(years).sort((a,b)=>b.localeCompare(a)).map(y2=>{
+    const {income,expense} = years[y2];
+    return `<tr><td>${y2}</td><td class="pos">${fmtMoney(income)}</td><td class="neg">${fmtMoney(expense)}</td><td class="${income-expense>=0?'pos':'neg'}">${fmtMoney(income-expense)}</td></tr>`;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="month-nav" style="margin-bottom:10px;">
+        <button data-act="prevMonth">‹</button>
+        <div class="month-label">${fmtYM(state.month)} 分類佔比</div>
+        <button data-act="nextMonth">›</button>
+      </div>
+      <div class="seg">
+        <button data-act="statsTab" data-val="expense" class="${type==='expense'?'active':''}">支出</button>
+        <button data-act="statsTab" data-val="income" class="${type==='income'?'active':''}">收入</button>
+      </div>
+      ${barsHtml}
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:14.5px;margin-bottom:2px;">近 6 個月收支趨勢</div>
+      <div class="trend-chart">${trendHtml}</div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>收入</span><span><i class="dot" style="background:var(--danger)"></i>支出</span></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:14.5px;margin-bottom:10px;">年度總覽</div>
+      <table class="yr"><thead><tr><th>年</th><th>收入</th><th>支出</th><th>結餘</th></tr></thead><tbody>${yearRows || '<tr><td colspan=4 style="text-align:center;color:var(--text-dim);padding:16px 0;">尚無資料</td></tr>'}</tbody></table>
+    </div>
+  `;
+}
+
+/* ---------------- Settings ---------------- */
+function daysSinceBackup(){
+  const raw = localStorage.getItem(BACKUP_KEY);
+  if(!raw) return null;
+  return Math.floor((Date.now()-Number(raw))/86400000);
+}
+function formatStorage(bytes){
+  return bytes < 1048576 ? `${Math.round(bytes/1024)} KB` : `${(bytes/1048576).toFixed(1)} MB`;
+}
+function hasCurrentFullBackup(){
+  const fullBackupAt = Number(localStorage.getItem(FULL_BACKUP_KEY)||0);
+  const lastPhotoChange = Number(localStorage.getItem(PHOTO_CHANGE_KEY)||0);
+  const lastDataChange = Number(localStorage.getItem(DATA_CHANGE_KEY)||0);
+  return fullBackupAt>0 && fullBackupAt>=Math.max(lastPhotoChange,lastDataChange);
+}
+function markPhotoChanged(){
+  const fullBackupAt = Number(localStorage.getItem(FULL_BACKUP_KEY)||0);
+  localStorage.setItem(PHOTO_CHANGE_KEY, String(Math.max(Date.now(), fullBackupAt+1)));
+}
+function markDataChanged(){
+  const fullBackupAt = Number(localStorage.getItem(FULL_BACKUP_KEY)||0);
+  localStorage.setItem(DATA_CHANGE_KEY, String(Math.max(Date.now(), fullBackupAt+1)));
+}
+function renderSettings(){
+  const d = daysSinceBackup();
+  const total = db.transactions.length;
+  const storeMB = (new Blob([localStorage.getItem(STORAGE_KEY)||'']).size / 1048576).toFixed(2);
+  const photoCount = photoStats.count;
+  const photoMB = photoStats.bytes < 1048576
+    ? Math.round(photoStats.bytes/1024) + ' KB'
+    : (photoStats.bytes/1048576).toFixed(1) + ' MB';
+  const oldPhotoCount = photoStats.oldCount;
+  const oldPhotoSize = formatStorage(photoStats.oldBytes);
+  const canCleanOldPhotos = oldPhotoCount>0 && hasCurrentFullBackup();
+  const standalone = isStandaloneMode();
+  const installDesc = standalone
+    ? '已從主畫面以 App 模式開啟，沒有網路也能使用'
+    : (deferredInstallPrompt
+      ? '可以安裝到主畫面，之後會像一般 App 一樣開啟'
+      : 'iPhone：用 Safari 開啟後，點分享，再選「加入主畫面」');
+  const banner = (d===null || d>=14)
+    ? `<div class="backup-banner">⚠️ ${d===null?'還沒有備份過':`已經 ${d} 天沒備份`}，建議現在匯出一份備份檔存到雲端或傳給自己。</div>`
+    : `<div class="backup-banner backup-ok">✅ ${d===0?'今天':`${d} 天前`}備份過，共 ${total.toLocaleString()} 筆資料。</div>`;
+
+  return `
+    <div class="card">${banner}
+      <div class="settings-section-title">App 與離線</div>
+      <div class="settings-item">
+        <div><div class="lbl">安裝到手機主畫面</div><div class="desc">${installDesc}</div></div>
+        <button class="btn btn-outline btn-sm" data-act="installApp" ${standalone?'disabled':''}>${standalone?'已安裝':'安裝說明'}</button>
+      </div>
+      <div class="howto">離線時可以新增、修改、查看與備份資料；資料仍只保存在這支手機，不會自動同步到其他裝置。</div>
+      <div class="settings-section-title">資料匯入</div>
+      <div class="settings-item">
+        <div><div class="lbl">還原備份</div><div class="desc">支援帳務 JSON 或含照片的完整 ZIP 備份</div></div>
+        <button class="btn btn-primary btn-sm" data-act="restoreBackup">選擇備份</button>
+      </div>
+      <div class="settings-item">
+        <div><div class="lbl">從舊記帳 App 匯入</div><div class="desc">選擇「記帳匯入檔.csv」，一次匯入歷史資料</div></div>
+        <button class="btn btn-outline btn-sm" data-act="importCsv">選擇檔案</button>
+      </div>
+      <div class="settings-section-title">備份與匯出</div>
+      <div class="settings-item">
+        <div><div class="lbl">完整備份（含照片）</div><div class="desc">帳務＋${photoCount} 張照片打包成一個檔案</div></div>
+        <button class="btn btn-primary btn-sm" data-act="fullBackup">備份</button>
+      </div>
+      <div class="settings-item">
+        <div><div class="lbl">只備份帳務資料</div><div class="desc">不含照片，檔案小、傳得快</div></div>
+        <button class="btn btn-outline btn-sm" data-act="shareBackup">備份</button>
+      </div>
+      <div class="howto">
+        按「備份」會跳出分享選單，挑一個地方存就好：
+        <div class="howto-row"><span class="howto-ic">☁️</span><span>存 Google 雲端硬碟或 iCloud —— 選單裡直接點，沒看到就先點「儲存到檔案」</span></div>
+        <div class="howto-row"><span class="howto-ic">💬</span><span>傳 LINE 給自己 —— 最快，也最不會忘記</span></div>
+      </div>
+      <div class="settings-section-title">手機空間</div>
+      <div class="settings-item">
+        <div>
+          <div class="lbl">清理一年前的照片</div>
+          <div class="desc">${oldPhotoCount
+            ? `${oldPhotoCount} 張，約 ${oldPhotoSize}${canCleanOldPhotos?'':'；請先完成一次含照片備份'}`
+            : '目前沒有超過一年的本機照片'}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" data-act="cleanupOldPhotos" ${canCleanOldPhotos?'':'disabled'}>釋放空間</button>
+      </div>
+      <div class="howto">帳務資料不會刪除。舊照片清理後，該筆帳務會保留「已封存至雲端」的張數。</div>
+      <div class="settings-item">
+        <div><div class="lbl">匯出 Excel 用 CSV</div><div class="desc">可以用 Excel／Numbers 打開查看</div></div>
+        <button class="btn btn-outline btn-sm" data-act="exportCsv">匯出</button>
+      </div>
+      <div class="settings-section-title">目前資料</div>
+      <div class="settings-item"><div class="lbl">總筆數</div><div>${total.toLocaleString()} 筆</div></div>
+      <div class="settings-item">
+        <div><div class="lbl">帳務資料</div><div class="desc">純文字，成長很慢</div></div>
+        <div style="${storeMB>4?'color:var(--danger);font-weight:700':''}">${storeMB} MB</div>
+      </div>
+      <div class="settings-item">
+        <div><div class="lbl">收據照片</div><div class="desc">${photoCount} 張，存進來前會自動壓縮</div></div>
+        <div>${photoMB}</div>
+      </div>
+    </div>
+    <div class="card" style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+      💡 這個 App 的資料只存在這支手機的瀏覽器裡，不會上傳到任何地方。<br>
+      建議每個月匯出一次備份，避免換手機或清瀏覽器資料時遺失紀錄。
+    </div>
+  `;
+}
+
+/* ---------------- Modal (Add/Edit) ---------------- */
+function openAdd(type){
+  state.form = { id:null, type: type||'expense', amount:'', category: (type==='income'?INCOME_CATS[0].key:EXPENSE_CATS[0].key), date: todayStr(), note:'', photos:[], archivedPhotoCount:0 };
+  state.editId = null;
+  state.modalOpen = true;
+  render();
+}
+function openEdit(id){
+  const t = db.transactions.find(x=>x.id===id);
+  if(!t) return;
+  state.form = { id:t.id, type:t.type, amount:String(t.amount), category:t.category, date:t.date, note:t.note||'', photos:(t.photos||[]).slice(), archivedPhotoCount:Number(t.archivedPhotoCount)||0 };
+  state.editId = id;
+  state.modalOpen = true;
+  render();
+}
+function closeModal(){
+  // 加了照片又按取消 → 把剛存進去的照片清掉，不要留垃圾佔空間
+  if(pendingPhotos.length){
+    pendingPhotos.forEach(p=> photoDelete(p));
+    pendingPhotos = [];
+  }
+  state.modalOpen = false; state.form = null; state.editId = null;
+  render();
+}
+function renderModal(){
+  const f = state.form;
+  const cats = f.type==='income' ? INCOME_CATS : EXPENSE_CATS;
+  const catBtns = cats.map(c=>`
+    <button class="cat-btn ${f.category===c.key?'active':''}" data-act="pickCat" data-val="${c.key}">
+      <span class="ic">${c.icon}</span><span>${c.label}</span>
+    </button>`).join('');
+
+  return `
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">${state.editId? '編輯紀錄':'新增紀錄'}</div>
+      <div class="type-toggle">
+        <button data-act="setType" data-val="expense" class="${f.type==='expense'?'active expense':''}">支出</button>
+        <button data-act="setType" data-val="income" class="${f.type==='income'?'active income':''}">收入</button>
+      </div>
+      <div class="amount-input-wrap">
+        <span class="cur">$</span>
+        <input id="amountInput" type="text" inputmode="decimal" placeholder="0" value="${f.amount}">
+      </div>
+      <div class="cat-grid">${catBtns}</div>
+      <div class="field-row">
+        <div class="field" style="flex:1.3">
+          <label>日期</label>
+          <input id="dateInput" type="date" value="${f.date}">
+        </div>
+        <div class="field">
+          <label>快速選擇</label>
+          <div class="quick-date">
+            <button data-act="quickDate" data-val="today" class="${f.date===todayStr()?'active':''}">今天</button>
+            <button data-act="quickDate" data-val="yesterday" class="${f.date===yesterdayStr()?'active':''}">昨天</button>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>備註（選填）</label>
+        <input id="noteInput" type="text" placeholder="例如：全聯買菜" value="${escapeAttr(f.note)}">
+      </div>
+      <div class="field" style="margin-bottom:16px;">
+        <label>收據照片（選填）</label>
+        <div class="photo-row">
+          ${f.photos.map(pid=>`
+            <div class="photo-thumb" data-pid="${pid}">
+              <img data-photo="${pid}" alt="收據">
+              <button class="photo-del" data-act="removePhoto" data-val="${pid}">✕</button>
+            </div>`).join('')}
+          <button class="photo-add" data-act="addPhoto">
+            <span style="font-size:22px;">📷</span><span style="font-size:11px;">加照片</span>
+          </button>
+        </div>
+        ${f.archivedPhotoCount?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;">☁️ 另有 ${f.archivedPhotoCount} 張舊照片已封存至雲端備份</div>`:''}
+      </div>
+      <div class="sheet-actions">
+        ${state.editId? `<button class="btn btn-danger" data-act="deleteTx">刪除</button>`:''}
+        <button class="btn btn-ghost" data-act="closeModal">取消</button>
+        <button class="btn btn-primary" data-act="saveTx">儲存</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Tabbar ---------------- */
+function renderTabbar(){
+  return `<div class="tabbar">
+    <button class="tab-btn ${state.view==='home'?'active':''}" data-act="setView" data-val="home"><span class="icon">🏠</span>首頁</button>
+    <button class="tab-btn ${state.view==='stats'?'active':''}" data-act="setView" data-val="stats"><span class="icon">📊</span>統計</button>
+    <button class="fab" data-act="openAdd">＋</button>
+    <button class="tab-btn ${state.view==='settings'?'active':''}" data-act="setView" data-val="settings"><span class="icon">⚙️</span>設定</button>
+    <div style="width:44px"></div>
+  </div>`;
+}
+
+/* ---------------- helpers ---------------- */
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+function showToast(msg){
+  const el = document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  document.getElementById('app').appendChild(el);
+  setTimeout(()=>el.remove(), 1800);
+}
+
+/* ---------------- CSV parsing (RFC4180-ish) ---------------- */
+function parseCSV(text){
+  const rows=[]; let row=[]; let field=''; let inQuotes=false;
+  text = text.replace(/^﻿/, '');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){
+        if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; }
+      } else field+=c;
+    } else {
+      if(c==='"') inQuotes=true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\r'){ /* skip */ }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field+=c;
+    }
+  }
+  if(field.length>0 || row.length>0){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.length>1 || (r.length===1 && r[0]!==''));
+}
+
+function importCsvText(text){
+  const rows = parseCSV(text);
+  if(rows.length===0){ showToast('檔案是空的'); return; }
+  let header = rows[0].map(h=>h.trim().toLowerCase());
+  let dataRows = rows.slice(1);
+  const idx = {
+    date: header.indexOf('date'), type: header.indexOf('type'),
+    category: header.indexOf('category'), amount: header.indexOf('amount'), note: header.indexOf('note'),
+  };
+  if(idx.date<0 || idx.type<0 || idx.category<0 || idx.amount<0){
+    showToast('CSV 欄位格式不對，需要 date,type,category,amount,note');
+    return;
+  }
+  // 重複匯入保護：同一筆（日期+類型+分類+金額+備註）已存在幾筆就跳過幾筆，
+  // 這樣不小心匯入第二次不會變兩倍，但同一天真的重複的兩筆早餐仍會保留。
+  const existing = {};
+  db.transactions.forEach(t=>{
+    const k = [t.date,t.type,t.category,t.amount,t.note||''].join('|');
+    existing[k] = (existing[k]||0) + 1;
+  });
+
+  let added=0, skipped=0, dupes=0;
+  const dataRowsToAdd = [];
+  dataRows.forEach(r=>{
+    const date=(r[idx.date]||'').trim();
+    const type=(r[idx.type]||'').trim();
+    const category=(r[idx.category]||'').trim();
+    const amountText=(r[idx.amount]||'').trim();
+    const amount=Number(amountText);
+    const note=idx.note>=0 ? (r[idx.note]||'') : '';
+    if(!isValidDateString(date) || !amountText || !Number.isFinite(amount) || amount===0 || (type!=='expense'&&type!=='income')){
+      skipped++; return;
+    }
+    const cat = category||'other';
+    const amt = Math.abs(amount);
+    const key = [date,type,cat,amt,note].join('|');
+    if(existing[key] > 0){ existing[key]--; dupes++; return; }
+
+    dataRowsToAdd.push({ id:uid(), type, category:cat, amount:amt, date, note, photos:[], createdAt: Date.now()+added });
+    added++;
+  });
+  const candidate = { transactions: [...db.transactions, ...dataRowsToAdd] };
+  if(!saveData(candidate)) return;
+  db = candidate;
+  markDataChanged();
+  const extras = [];
+  if(dupes) extras.push(`已存在 ${dupes} 筆未重複加入`);
+  if(skipped) extras.push(`格式不符略過 ${skipped} 筆`);
+  showToast(`匯入完成：新增 ${added} 筆${extras.length?`（${extras.join('、')}）`:''}`);
+  render();
+}
+
+/* ---------------- ZIP 打包（store 模式，不再壓縮）----------------
+   照片本身已經是壓過的 JPEG，再壓也省不了多少，所以直接原樣打包，
+   速度快、記憶體省。產出的 .zip 在電腦上點兩下就能打開。 */
+const CRC_TABLE = (()=>{
+  const t = new Uint32Array(256);
+  for(let i=0;i<256;i++){
+    let c = i;
+    for(let k=0;k<8;k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(u8){
+  let c = 0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function dosDateTime(d){
+  const time = ((d.getHours()<<11) | (d.getMinutes()<<5) | (Math.floor(d.getSeconds()/2))) & 0xFFFF;
+  const date = (((d.getFullYear()-1980)<<9) | ((d.getMonth()+1)<<5) | d.getDate()) & 0xFFFF;
+  return {time, date};
+}
+// entries: [{name, data:Uint8Array}]
+function buildZip(entries){
+  const enc = new TextEncoder();
+  const now = new Date();
+  const {time, date} = dosDateTime(now);
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+
+  entries.forEach(e=>{
+    const nameBytes = enc.encode(e.name);
+    const crc = crc32(e.data);
+    const size = e.data.length;
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint16(6, 0x0800, true); // UTF-8 檔名
+    lh.setUint16(8, 0, true);      // store
+    lh.setUint16(10, time, true);
+    lh.setUint16(12, date, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true);
+    lh.setUint32(22, size, true);
+    lh.setUint16(26, nameBytes.length, true);
+    lh.setUint16(28, 0, true);
+
+    chunks.push(new Uint8Array(lh.buffer), nameBytes, e.data);
+
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(8, 0x0800, true);
+    cd.setUint16(10, 0, true);
+    cd.setUint16(12, time, true);
+    cd.setUint16(14, date, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, size, true);
+    cd.setUint32(24, size, true);
+    cd.setUint16(28, nameBytes.length, true);
+    cd.setUint16(30, 0, true);
+    cd.setUint16(32, 0, true);
+    cd.setUint16(34, 0, true);
+    cd.setUint16(36, 0, true);
+    cd.setUint32(38, 0, true);
+    cd.setUint32(42, offset, true);
+    central.push(new Uint8Array(cd.buffer), nameBytes);
+
+    offset += 30 + nameBytes.length + size;
+  });
+
+  let centralSize = 0;
+  central.forEach(c=> centralSize += c.length);
+
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(8, entries.length, true);
+  end.setUint16(10, entries.length, true);
+  end.setUint32(12, centralSize, true);
+  end.setUint32(16, offset, true);
+
+  return new Blob([...chunks, ...central, new Uint8Array(end.buffer)], {type:'application/zip'});
+}
+
+/* 只解開本 App 產生的 store 模式 ZIP，不執行檔案內的任何內容。 */
+async function readBackupZip(file){
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  const view = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const dec = new TextDecoder('utf-8');
+  const entries = new Map();
+  let offset = 0;
+
+  while(offset + 4 <= u8.length){
+    const sig = view.getUint32(offset, true);
+    if(sig===0x02014b50 || sig===0x06054b50) break;
+    if(sig!==0x04034b50 || offset+30>u8.length) throw new Error('ZIP 備份格式不完整');
+    const flags = view.getUint16(offset+6, true);
+    const method = view.getUint16(offset+8, true);
+    const expectedCrc = view.getUint32(offset+14, true);
+    const size = view.getUint32(offset+18, true);
+    const nameLen = view.getUint16(offset+26, true);
+    const extraLen = view.getUint16(offset+28, true);
+    if((flags & 0x0008)!==0 || method!==0) throw new Error('這不是本 App 產生的完整備份');
+    const nameStart = offset+30;
+    const dataStart = nameStart+nameLen+extraLen;
+    const dataEnd = dataStart+size;
+    if(dataEnd>u8.length) throw new Error('ZIP 備份內容不完整');
+    const data = u8.slice(dataStart, dataEnd);
+    if(crc32(data)!==expectedCrc) throw new Error('ZIP 備份內容損壞');
+    const name = dec.decode(u8.slice(nameStart, nameStart+nameLen));
+    if(!name.startsWith('/') && !name.includes('../') && !entries.has(name)){
+      entries.set(name, data);
+    }
+    offset = dataEnd;
+  }
+  const jsonBytes = entries.get('帳務資料.json');
+  if(!jsonBytes) throw new Error('備份中找不到「帳務資料.json」');
+  let raw;
+  try{ raw = JSON.parse(dec.decode(jsonBytes)); }
+  catch(e){ throw new Error('備份內的帳務資料無法讀取'); }
+  return {raw, entries};
+}
+
+function validateBackupData(raw){
+  if(!raw || typeof raw!=='object' || !Array.isArray(raw.transactions)){
+    throw new Error('備份格式不正確');
+  }
+  const seenIds = new Set();
+  const transactions = raw.transactions.map((t,index)=>{
+    const amount = Number(t && t.amount);
+    if(!t || (t.type!=='expense'&&t.type!=='income') || !isValidDateString(String(t.date||'')) || !Number.isFinite(amount) || amount<=0){
+      throw new Error(`第 ${index+1} 筆帳務資料格式不正確`);
+    }
+    const sourceId = typeof t.id==='string' && t.id && !seenIds.has(t.id) ? t.id : uid();
+    seenIds.add(sourceId);
+    return {
+      id: sourceId,
+      type: t.type,
+      category: typeof t.category==='string' && t.category ? t.category : (t.type==='income'?'other_income':'other'),
+      amount,
+      date: t.date,
+      note: typeof t.note==='string' ? t.note : '',
+      photos: Array.isArray(t.photos) ? [...new Set(t.photos.filter(p=>typeof p==='string'&&p))] : [],
+      archivedPhotoCount: Math.max(0, Math.floor(Number(t.archivedPhotoCount)||0)),
+      createdAt: Number.isFinite(Number(t.createdAt)) ? Number(t.createdAt) : Date.now()+index,
+    };
+  });
+  return {transactions};
+}
+
+async function restoreBackupFile(file){
+  let validated, zipEntries = null;
+  if(file.name.toLowerCase().endsWith('.zip')){
+    const parsed = await readBackupZip(file);
+    validated = validateBackupData(parsed.raw);
+    zipEntries = parsed.entries;
+  }else{
+    let raw;
+    try{ raw = JSON.parse(await file.text()); }
+    catch(e){ throw new Error('JSON 備份無法讀取'); }
+    validated = validateBackupData(raw);
+  }
+
+  const referencedPhotos = [...new Set(validated.transactions.flatMap(t=>t.photos))];
+  const availablePhotos = zipEntries
+    ? referencedPhotos.filter(id=>zipEntries.has(`照片/${id}.jpg`))
+    : [];
+  const missingPhotos = referencedPhotos.length - availablePhotos.length;
+  const message = `即將用備份的 ${validated.transactions.length.toLocaleString()} 筆帳務${availablePhotos.length?`、${availablePhotos.length} 張照片`:''}覆蓋目前資料。${missingPhotos?`\n\n備份中有 ${missingPhotos} 張照片缺失，這些照片不會還原。`:''}\n\n確定繼續嗎？`;
+  if(!confirm(message)) return;
+
+  const stagedIds = [];
+  const photoMap = new Map();
+  try{
+    let oldPhotoIds = [];
+    try{ oldPhotoIds = await photoAllKeys(); }
+    catch(e){
+      if(availablePhotos.length) throw new Error('這個瀏覽器無法存取備份中的照片');
+    }
+    for(const oldId of availablePhotos){
+      const newId = photoId();
+      const bytes = zipEntries.get(`照片/${oldId}.jpg`);
+      await photoPut(newId, new Blob([bytes], {type:'image/jpeg'}));
+      stagedIds.push(newId);
+      photoMap.set(oldId, newId);
+    }
+    const candidate = {
+      transactions: validated.transactions.map(t=>({
+        ...t,
+        id: uid(),
+        photos: t.photos.map(id=>photoMap.get(id)).filter(Boolean),
+      }))
+    };
+    if(!saveData(candidate)){
+      await Promise.all(stagedIds.map(id=>photoDelete(id)));
+      return;
+    }
+    db = candidate;
+    await Promise.all(oldPhotoIds.filter(id=>!stagedIds.includes(id)).map(id=>photoDelete(id)));
+    localStorage.removeItem(BACKUP_KEY);
+    if(zipEntries){
+      const restoredAt = String(Date.now());
+      localStorage.setItem(FULL_BACKUP_KEY, restoredAt);
+      localStorage.setItem(PHOTO_CHANGE_KEY, restoredAt);
+      localStorage.setItem(DATA_CHANGE_KEY, restoredAt);
+    }else{
+      localStorage.removeItem(FULL_BACKUP_KEY);
+      localStorage.removeItem(PHOTO_CHANGE_KEY);
+      localStorage.setItem(DATA_CHANGE_KEY, String(Date.now()));
+    }
+    lastDeleted = null;
+    pendingPhotos = [];
+    state.modalOpen = false;
+    state.editId = null;
+    state.form = null;
+    if(db.transactions.length){
+      state.month = Math.max(...db.transactions.map(t=>ymKey(t.date)));
+    }
+    render();
+    await refreshPhotoStats();
+    showToast(`已還原 ${db.transactions.length.toLocaleString()} 筆資料`);
+  }catch(err){
+    await Promise.all(stagedIds.map(id=>photoDelete(id)));
+    throw err;
+  }
+}
+
+/* ---------------- Export ---------------- */
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function toCsvField(v){
+  v = String(v??'');
+  if(/[",\n]/.test(v)) return '"' + v.replace(/"/g,'""') + '"';
+  return v;
+}
+function exportCsv(){
+  const lines = ['date,type,category,amount,note'];
+  db.transactions.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+    lines.push([t.date,t.type,t.category,t.amount,t.note||''].map(toCsvField).join(','));
+  });
+  downloadBlob('\ufeff' + lines.join('\n'), `記帳資料_${todayStr()}.csv`, 'text/csv;charset=utf-8');
+  showToast('CSV 已匯出');
+}
+function exportBackup(){
+  downloadBlob(JSON.stringify(db, null, 2), `記帳備份_${todayStr()}.json`, 'application/json');
+  markBackedUp();
+}
+
+/* 一鍵備份：優先叫出 iPhone 的分享選單（可直接「儲存到檔案」→ iCloud 雲碟，
+   或傳給 LINE 給自己），不支援時退回一般下載。
+   注意：iOS 規定 share 物件裡只能有 files，多帶 title/text 會失敗。 */
+async function shareBackup(){
+  const content = JSON.stringify(db, null, 2);
+  const filename = `記帳備份_${todayStr()}.json`;
+  try{
+    const file = new File([content], filename, {type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      markBackedUp();
+      return;
+    }
+  }catch(e){
+    // 使用者按取消就不算備份成功，直接結束不要再跳下載
+    if(e && e.name === 'AbortError') return;
+  }
+  downloadBlob(content, filename, 'application/json');
+  markBackedUp();
+}
+function markBackedUp(isFull=false){
+  const backedUpAt = String(Math.max(
+    Date.now(),
+    Number(localStorage.getItem(PHOTO_CHANGE_KEY)||0),
+    Number(localStorage.getItem(DATA_CHANGE_KEY)||0)
+  ));
+  localStorage.setItem(BACKUP_KEY, backedUpAt);
+  if(isFull) localStorage.setItem(FULL_BACKUP_KEY, backedUpAt);
+  showToast('已匯出備份檔');
+  render();
+}
+
+/* 完整備份：帳務資料 + 全部照片打包成一個 ZIP，一鍵存進 iCloud 雲碟。
+   照片可能很多，所以邊做邊顯示進度，做完才分享。 */
+async function fullBackup(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.style.alignItems = 'center';
+  overlay.innerHTML = `<div class="card" style="margin:0 24px;text-align:center;max-width:320px;">
+    <div style="font-weight:700;margin-bottom:8px;">正在打包備份…</div>
+    <div id="bkProg" style="font-size:13px;color:var(--text-dim);">準備中</div>
+  </div>`;
+  document.getElementById('app').appendChild(overlay);
+  const prog = overlay.querySelector('#bkProg');
+
+  try{
+    const enc = new TextEncoder();
+    const entries = [];
+
+    entries.push({name:'帳務資料.json', data: enc.encode(JSON.stringify(db, null, 2))});
+
+    const lines = ['date,type,category,amount,note'];
+    db.transactions.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+      lines.push([t.date,t.type,t.category,t.amount,t.note||''].map(toCsvField).join(','));
+    });
+    entries.push({name:'帳務資料.csv', data: enc.encode('﻿' + lines.join('\n'))});
+
+    const keys = await photoAllKeys();
+    let bytes = 0;
+    for(let i=0;i<keys.length;i++){
+      prog.textContent = `照片 ${i+1} / ${keys.length}`;
+      const blob = await photoGet(keys[i]);
+      if(blob){
+        const u8 = new Uint8Array(await blob.arrayBuffer());
+        bytes += u8.length;
+        entries.push({name:`照片/${keys[i]}.jpg`, data: u8});
+      }
+      if(i % 20 === 0) await new Promise(r=>setTimeout(r,0)); // 讓畫面有機會更新
+    }
+
+    prog.textContent = '打包中…';
+    await new Promise(r=>setTimeout(r,0));
+    const zip = buildZip(entries);
+    const filename = `記帳完整備份_${todayStr()}.zip`;
+    overlay.remove();
+
+    try{
+      const file = new File([zip], filename, {type:'application/zip'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file]});
+        markBackedUp(true);
+        return;
+      }
+    }catch(e){
+      if(e && e.name === 'AbortError') return;
+    }
+    const url = URL.createObjectURL(zip);
+    const a = document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    markBackedUp(true);
+  }catch(err){
+    overlay.remove();
+    alert('備份失敗：' + (err && err.message ? err.message : '未知錯誤') + '\n\n照片太多時可能會失敗，請先試「只備份帳務資料」。');
+  }
+}
+
+async function cleanupOldPhotos(){
+  const cutoff = oneYearAgoStr();
+  const eligible = db.transactions.filter(t=>t.date<cutoff && Array.isArray(t.photos) && t.photos.length);
+  const photoIds = [...new Set(eligible.flatMap(t=>t.photos))];
+  if(!photoIds.length){ showToast('目前沒有可清理的舊照片'); return; }
+  if(!hasCurrentFullBackup()){
+    alert('請先完成一次「完整備份（含照片）」，再清理手機空間。');
+    return;
+  }
+  const sizeText = formatStorage(photoStats.oldBytes);
+  const ok = confirm(`請先確認「記帳完整備份 ZIP」已經在 Google 雲端硬碟或 iCloud 裡看得到。\n\n確定後將清除 ${cutoff} 以前的 ${photoIds.length} 張本機照片，約釋放 ${sizeText}。\n\n帳務日期、金額、分類與備註都會保留。\n\n我已確認雲端備份，繼續清理？`);
+  if(!ok) return;
+
+  const candidate = {
+    transactions: db.transactions.map(t=>{
+      if(!(t.date<cutoff && Array.isArray(t.photos) && t.photos.length)) return t;
+      return {
+        ...t,
+        archivedPhotoCount: (Number(t.archivedPhotoCount)||0) + t.photos.length,
+        photos: [],
+      };
+    })
+  };
+  if(!saveData(candidate)) return;
+  db = candidate;
+  markDataChanged();
+  const results = await Promise.all(photoIds.map(id=>photoDelete(id)));
+  await refreshPhotoStats();
+  render();
+  const failedIds = photoIds.filter((id,index)=>!results[index]);
+  const failed = failedIds.length;
+  if(failed){
+    localStorage.setItem(PHOTO_CLEANUP_PENDING_KEY, JSON.stringify(failedIds));
+    alert(`帳務已保留，但有 ${failed} 張照片暫時無法從手機儲存區清除。App 下次開啟時會自動重試。`);
+  }else{
+    localStorage.removeItem(PHOTO_CLEANUP_PENDING_KEY);
+    showToast(`已清理 ${photoIds.length} 張舊照片`);
+  }
+}
+
+async function retryPendingPhotoCleanup(){
+  let ids = [];
+  try{ ids = JSON.parse(localStorage.getItem(PHOTO_CLEANUP_PENDING_KEY)||'[]'); }
+  catch(e){ localStorage.removeItem(PHOTO_CLEANUP_PENDING_KEY); }
+  if(!Array.isArray(ids) || !ids.length) return;
+  let results;
+  try{ results = await Promise.all(ids.map(id=>photoDelete(id))); }
+  catch(e){ return; }
+  const remaining = ids.filter((id,index)=>!results[index]);
+  if(remaining.length) localStorage.setItem(PHOTO_CLEANUP_PENDING_KEY, JSON.stringify(remaining));
+  else localStorage.removeItem(PHOTO_CLEANUP_PENDING_KEY);
+}
+
+/* ---------------- Events ---------------- */
+function attachEvents(){
+  document.querySelectorAll('[data-act]').forEach(el=>{
+    el.addEventListener('click', onAction);
+  });
+  const overlay = document.getElementById('overlay');
+  if(overlay){
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+  }
+  const amountInput = document.getElementById('amountInput');
+  if(amountInput){
+    amountInput.addEventListener('input', (e)=>{
+      let v = e.target.value.replace(/[^0-9.]/g,'');
+      state.form.amount = v;
+    });
+    setTimeout(()=>amountInput.focus(), 50);
+  }
+  const dateInput = document.getElementById('dateInput');
+  if(dateInput){
+    dateInput.addEventListener('change', (e)=>{ state.form.date = e.target.value; render(); });
+  }
+  const noteInput = document.getElementById('noteInput');
+  if(noteInput){
+    noteInput.addEventListener('input', (e)=>{ state.form.note = e.target.value; });
+  }
+  document.querySelectorAll('.tx-item').forEach(el=>{
+    el.addEventListener('click', ()=> openEdit(el.dataset.id));
+  });
+  loadPhotoImages();
+}
+
+function onAction(e){
+  const el = e.currentTarget;
+  const act = el.dataset.act;
+  const val = el.dataset.val;
+  switch(act){
+    case 'setView': state.view = val; render(); break;
+    case 'statsTab': state.statsTab = val; render(); break;
+    case 'prevMonth': { let y=Math.floor(state.month/100), m=state.month%100; m--; if(m<=0){m=12;y--;} state.month=y*100+m; render(); break; }
+    case 'nextMonth': { let y=Math.floor(state.month/100), m=state.month%100; m++; if(m>12){m=1;y++;} state.month=y*100+m; render(); break; }
+    case 'openAdd': openAdd('expense'); break;
+    case 'closeModal': closeModal(); break;
+    case 'setType': {
+      state.form.type = val;
+      state.form.category = val==='income'? INCOME_CATS[0].key : EXPENSE_CATS[0].key;
+      render(); break;
+    }
+    case 'pickCat': state.form.category = val; render(); break;
+    case 'quickDate': state.form.date = val==='today'? todayStr() : yesterdayStr(); render(); break;
+    case 'saveTx': saveTx(); break;
+    case 'deleteTx': deleteTx(); break;
+    case 'importCsv': document.getElementById('importFile').click(); break;
+    case 'restoreBackup': document.getElementById('restoreFile').click(); break;
+    case 'exportCsv': exportCsv(); break;
+    case 'exportBackup': exportBackup(); break;
+    case 'shareBackup': shareBackup(); break;
+    case 'fullBackup': fullBackup(); break;
+    case 'cleanupOldPhotos': cleanupOldPhotos(); break;
+    case 'installApp': installApp(); break;
+    case 'addPhoto': document.getElementById('photoFile').click(); break;
+    case 'removePhoto': removePhoto(val); break;
+  }
+}
+
+function saveTx(){
+  const f = state.form;
+  const amt = parseFloat(f.amount);
+  if(!amt || amt<=0){ showToast('請輸入金額'); return; }
+  if(!f.date){ showToast('請選擇日期'); return; }
+  let candidate;
+  let removedPhotos = [];
+  if(state.editId){
+    const t = db.transactions.find(x=>x.id===state.editId);
+    if(!t){ showToast('找不到這筆資料'); return; }
+    removedPhotos = (t.photos||[]).filter(p=> !f.photos.includes(p));
+    candidate = {
+      transactions: db.transactions.map(x=>x.id===state.editId
+        ? {...x, type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice()}
+        : x)
+    };
+  } else {
+    candidate = {
+      transactions: [...db.transactions, { id:uid(), type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice(), createdAt: Date.now() }]
+    };
+  }
+  if(!saveData(candidate)) return;
+  db = candidate;
+  markDataChanged();
+  removedPhotos.forEach(p=> photoDelete(p));
+  if(pendingPhotos.length) markPhotoChanged();
+  pendingPhotos = [];   // 已經跟著交易存起來了，不再是暫存
+  state.month = ymKey(f.date);
+  closeModal();
+  refreshPhotoStats();
+  showToast('已儲存');
+}
+function deleteTx(){
+  const t = db.transactions.find(x=>x.id===state.editId);
+  if(!t) return;
+  const c = catInfo(t.category);
+  if(!confirm(`確定要刪除這筆嗎？\n\n${t.date}　${c.label}　$${t.amount.toLocaleString()}${t.note?`\n${t.note}`:''}`)) return;
+  const candidate = { transactions: db.transactions.filter(x=>x.id!==state.editId) };
+  if(!saveData(candidate)) return;
+  lastDeleted = t;
+  db = candidate;
+  markDataChanged();
+  closeModal();
+  showUndoToast('已刪除');
+}
+
+// 誤刪救回：刪掉的最後一筆先留著，按「復原」就能救回來
+let lastDeleted = null;
+function showUndoToast(msg){
+  const el = document.createElement('div');
+  el.className='toast';
+  el.innerHTML = `${msg}　<span style="color:#ffb3b5;font-weight:700;text-decoration:underline;">復原</span>`;
+  el.querySelector('span').addEventListener('click', ()=>{
+    if(lastDeleted){
+      const candidate = { transactions: [...db.transactions, lastDeleted] };
+      if(!saveData(candidate)) return;
+      db = candidate;
+      markDataChanged();
+      lastDeleted = null;
+      render();
+      showToast('已復原');
+    }
+    el.remove();
+  });
+  document.getElementById('app').appendChild(el);
+  setTimeout(()=>{
+    el.remove();
+    // 復原時間過了才真的把照片刪掉，這樣按復原時照片還在
+    if(lastDeleted && lastDeleted.photos){
+      lastDeleted.photos.forEach(p=> photoDelete(p));
+      lastDeleted = null;
+      refreshPhotoStats();
+    }
+  }, 6000);
+}
+
+/* 剛加進來、還沒按儲存的照片先記在這，取消就要清掉，不能留垃圾在 IndexedDB */
+let pendingPhotos = [];
+
+async function removePhoto(pid){
+  state.form.photos = state.form.photos.filter(p=>p!==pid);
+  if(pendingPhotos.includes(pid)){
+    await photoDelete(pid);
+    pendingPhotos = pendingPhotos.filter(p=>p!==pid);
+  }
+  render();
+}
+
+document.getElementById('photoFile').addEventListener('change', async (e)=>{
+  const files = Array.from(e.target.files||[]);
+  e.target.value = '';
+  if(!files.length || !state.form) return;
+
+  for(const file of files){
+    if(!file.type.startsWith('image/')) continue;
+    try{
+      const blob = await compressImage(file);
+      const pid = photoId();
+      await photoPut(pid, blob);
+      state.form.photos.push(pid);
+      pendingPhotos.push(pid);
+    }catch(err){
+      alert('這張照片存不進去：' + (err.message||'未知錯誤'));
+    }
+  }
+  render();
+});
+
+// 縮圖與大圖都從 IndexedDB 讀出來再顯示
+async function loadPhotoImages(){
+  const imgs = document.querySelectorAll('img[data-photo]');
+  for(const el of imgs){
+    if(el.dataset.loaded) continue;
+    const blob = await photoGet(el.dataset.photo);
+    if(blob){
+      const url = URL.createObjectURL(blob);
+      el.src = url;
+      el.dataset.objectUrl = '1';
+      el.dataset.loaded = '1';
+      el.addEventListener('click', ()=> openPhotoViewer(el.dataset.photo));
+    }
+  }
+}
+
+async function openPhotoViewer(pid){
+  const blob = await photoGet(pid);
+  if(!blob) return;
+  const url = URL.createObjectURL(blob);
+  const v = document.createElement('div');
+  v.className = 'photo-viewer';
+  v.innerHTML = `<img src="${url}" alt="收據"><button class="close">關閉</button>`;
+  const close = ()=>{ URL.revokeObjectURL(url); v.remove(); };
+  v.querySelector('.close').addEventListener('click', close);
+  v.addEventListener('click', (e)=>{ if(e.target===v) close(); });
+  document.body.appendChild(v);
+}
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=> importCsvText(ev.target.result);
+  reader.readAsText(file, 'utf-8');
+  e.target.value = '';
+});
+
+document.getElementById('restoreFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    await restoreBackupFile(file);
+  }catch(err){
+    alert('還原失敗：' + (err && err.message ? err.message : '未知錯誤') + '\n\n原本資料不會被覆蓋。');
+  }
+});
+
+function isStandaloneMode(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+async function installApp(){
+  if(isStandaloneMode()){
+    showToast('目前已經是 App 模式');
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if(state.view==='settings') render();
+    return;
+  }
+  alert('iPhone 安裝方式：\n\n1. 請用 Safari 開啟這個網址\n2. 點下方「分享」按鈕\n3. 選「加入主畫面」\n4. 回到主畫面點圖示開啟\n\nAndroid：用 Chrome 開啟選單，選「安裝應用程式」。');
+}
+
+function updateOnlineStatus(){
+  const banner = document.getElementById('offlineBanner');
+  if(banner) banner.hidden = navigator.onLine;
+}
+
+async function registerPWA(){
+  if(!('serviceWorker' in navigator) || location.protocol==='file:') return;
+  try{
+    await navigator.serviceWorker.register('./service-worker.js', {scope:'./'});
+  }catch(err){
+    console.warn('離線功能註冊失敗', err);
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (event)=>{
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if(state.view==='settings') render();
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+  showToast('App 已安裝到主畫面');
+  if(state.view==='settings') render();
+});
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+render();
+updateOnlineStatus();
+registerPWA();
+if(navigator.storage && navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
+retryPendingPhotoCleanup().then(refreshPhotoStats);
+</script>
+</body>
+</html>

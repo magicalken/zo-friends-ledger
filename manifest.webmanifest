@@ -1,0 +1,26 @@
+{
+  "name": "ZO & FRIENDS 家用記帳",
+  "short_name": "ZO 記帳",
+  "description": "可離線使用的家用記帳 App，支援帳務、收據照片、完整備份與還原。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f5f3",
+  "theme_color": "#171717",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
