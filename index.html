@@ -222,6 +222,7 @@ table.yr th{color:var(--text-dim);font-weight:600;font-size:12px;}
   background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
 .photo-add{width:68px;height:68px;border-radius:10px;border:1.5px dashed var(--primary);background:var(--primary-light);
   color:var(--primary-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex-shrink:0;}
+.photo-upload-status{font-size:12px;color:var(--primary-dark);font-weight:700;margin-top:8px;}
 .tx-cam{font-size:11px;color:var(--text-dim);margin-left:5px;}
 .photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:80;display:flex;align-items:center;justify-content:center;flex-direction:column;}
 .photo-viewer img{max-width:96%;max-height:82%;object-fit:contain;}
@@ -787,16 +788,17 @@ function renderModal(){
               <img data-photo="${pid}" alt="收據">
               <button class="photo-del" data-act="removePhoto" data-val="${pid}">✕</button>
             </div>`).join('')}
-          <button class="photo-add" data-act="addPhoto">
-            <span style="font-size:22px;">📷</span><span style="font-size:11px;">加照片</span>
+          <button class="photo-add" data-act="addPhoto" ${photoUploadInProgress?'disabled':''}>
+            <span style="font-size:22px;">${photoUploadInProgress?'⏳':'📷'}</span><span style="font-size:11px;">${photoUploadInProgress?'處理中':'加照片'}</span>
           </button>
         </div>
+        ${photoUploadInProgress?`<div class="photo-upload-status">正在壓縮並儲存照片，完成後才能建立紀錄…</div>`:''}
         ${f.archivedPhotoCount?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;">☁️ 另有 ${f.archivedPhotoCount} 張舊照片已封存至雲端備份</div>`:''}
       </div>
       <div class="sheet-actions">
         ${state.editId? `<button class="btn btn-danger" data-act="deleteTx">刪除</button>`:''}
         <button class="btn btn-ghost" data-act="closeModal">取消</button>
-        <button class="btn btn-primary" data-act="saveTx">儲存</button>
+        <button class="btn btn-primary" data-act="saveTx" ${photoUploadInProgress?'disabled':''}>${photoUploadInProgress?'照片處理中…':'儲存'}</button>
       </div>
     </div>
   </div>`;
@@ -1369,37 +1371,52 @@ function onAction(e){
   }
 }
 
-function saveTx(){
+let transactionSaveInProgress = false;
+async function saveTx(){
+  if(photoUploadInProgress>0){ showToast('照片還在處理，請稍候'); return; }
+  if(transactionSaveInProgress) return;
   const f = state.form;
   const amt = parseFloat(f.amount);
   if(!amt || amt<=0){ showToast('請輸入金額'); return; }
   if(!f.date){ showToast('請選擇日期'); return; }
-  let candidate;
-  let removedPhotos = [];
-  if(state.editId){
-    const t = db.transactions.find(x=>x.id===state.editId);
-    if(!t){ showToast('找不到這筆資料'); return; }
-    removedPhotos = (t.photos||[]).filter(p=> !f.photos.includes(p));
-    candidate = {
-      transactions: db.transactions.map(x=>x.id===state.editId
-        ? {...x, type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice()}
-        : x)
-    };
-  } else {
-    candidate = {
-      transactions: [...db.transactions, { id:uid(), type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice(), createdAt: Date.now() }]
-    };
+  transactionSaveInProgress = true;
+  try{
+    const storedPhotos = await Promise.all(f.photos.map(id=>photoGet(id).catch(()=>null)));
+    if(state.form!==f || !state.modalOpen) return;
+    if(storedPhotos.some(blob=>!blob)){
+      showToast('有照片尚未存好，請重新加入');
+      return;
+    }
+
+    let candidate;
+    let removedPhotos = [];
+    if(state.editId){
+      const t = db.transactions.find(x=>x.id===state.editId);
+      if(!t){ showToast('找不到這筆資料'); return; }
+      removedPhotos = (t.photos||[]).filter(p=> !f.photos.includes(p));
+      candidate = {
+        transactions: db.transactions.map(x=>x.id===state.editId
+          ? {...x, type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice()}
+          : x)
+      };
+    } else {
+      candidate = {
+        transactions: [...db.transactions, { id:uid(), type:f.type, amount:amt, category:f.category, date:f.date, note:f.note, photos:f.photos.slice(), createdAt: Date.now() }]
+      };
+    }
+    if(!saveData(candidate)) return;
+    db = candidate;
+    markDataChanged();
+    removedPhotos.forEach(p=> photoDelete(p));
+    if(pendingPhotos.length) markPhotoChanged();
+    pendingPhotos = [];   // 已經跟著交易存起來了，不再是暫存
+    state.month = ymKey(f.date);
+    closeModal();
+    refreshPhotoStats();
+    showToast('已儲存');
+  }finally{
+    transactionSaveInProgress = false;
   }
-  if(!saveData(candidate)) return;
-  db = candidate;
-  markDataChanged();
-  removedPhotos.forEach(p=> photoDelete(p));
-  if(pendingPhotos.length) markPhotoChanged();
-  pendingPhotos = [];   // 已經跟著交易存起來了，不再是暫存
-  state.month = ymKey(f.date);
-  closeModal();
-  refreshPhotoStats();
-  showToast('已儲存');
 }
 function deleteTx(){
   const t = db.transactions.find(x=>x.id===state.editId);
@@ -1447,6 +1464,7 @@ function showUndoToast(msg){
 
 /* 剛加進來、還沒按儲存的照片先記在這，取消就要清掉，不能留垃圾在 IndexedDB */
 let pendingPhotos = [];
+let photoUploadInProgress = 0;
 
 async function removePhoto(pid){
   state.form.photos = state.form.photos.filter(p=>p!==pid);
@@ -1461,20 +1479,34 @@ document.getElementById('photoFile').addEventListener('change', async (e)=>{
   const files = Array.from(e.target.files||[]);
   e.target.value = '';
   if(!files.length || !state.form) return;
+  const targetForm = state.form;
+  const imageFiles = files.filter(file=>file.type.startsWith('image/'));
+  if(!imageFiles.length) return;
+  photoUploadInProgress += imageFiles.length;
+  render();
 
-  for(const file of files){
-    if(!file.type.startsWith('image/')) continue;
+  for(const file of imageFiles){
+    let pid = null;
     try{
       const blob = await compressImage(file);
-      const pid = photoId();
+      pid = photoId();
       await photoPut(pid, blob);
-      state.form.photos.push(pid);
-      pendingPhotos.push(pid);
+      if(state.modalOpen && state.form===targetForm){
+        targetForm.photos.push(pid);
+        pendingPhotos.push(pid);
+      }else{
+        await photoDelete(pid);
+      }
     }catch(err){
-      alert('這張照片存不進去：' + (err.message||'未知錯誤'));
+      if(pid) await photoDelete(pid);
+      if(state.modalOpen && state.form===targetForm){
+        alert('這張照片存不進去：' + (err.message||'未知錯誤'));
+      }
+    }finally{
+      photoUploadInProgress = Math.max(0, photoUploadInProgress-1);
     }
   }
-  render();
+  if(state.modalOpen && state.form===targetForm) render();
 });
 
 // 縮圖與大圖都從 IndexedDB 讀出來再顯示
