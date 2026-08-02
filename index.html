@@ -253,7 +253,7 @@ const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
 const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
 const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
 const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 const EXPENSE_CATS = [
   {key:'food', label:'餐飲', icon:'🍜'},
@@ -1485,6 +1485,8 @@ let pendingPhotos = [];
 let photoUploadInProgress = 0;
 let photoPickerStatus = '';
 let photoPickerRequestId = 0;
+let photoPickerProbeId = 0;
+let activePhotoPicker = null;
 const handledPhotoFiles = new WeakSet();
 
 function setPhotoPickerStatus(message){
@@ -1500,17 +1502,18 @@ function openPhotoPicker(inputId, sourceLabel){
   const input = document.getElementById(inputId);
   if(!input || !state.modalOpen) return;
   const requestId = ++photoPickerRequestId;
+  photoPickerProbeId++;
   input.value = '';
+  activePhotoPicker = {input, sourceLabel, requestId};
   setPhotoPickerStatus(`等待 iPhone 從${sourceLabel}回傳照片…`);
   input.click();
-  // iOS 開啟選擇器時會暫停網頁；回到 App 後若沒有任何事件，就顯示可操作的備援提示。
+  // iOS 開啟選擇器時會暫停網頁；回到 App 後再輪詢 FileList。
+  // 有些版本會先送出空的 input/cancel，稍後才把選到的照片放進 FileList。
   setTimeout(()=>{
     if(requestId===photoPickerRequestId && photoPickerStatus.startsWith('等待 iPhone')){
-      setPhotoPickerStatus(sourceLabel==='相簿'
-        ? '沒有收到相簿照片，請再試一次，或改用「直接拍照」。'
-        : '沒有收到拍攝照片，請再拍一次。');
+      queuePhotoProbe(input, sourceLabel, requestId);
     }
-  }, 1500);
+  }, 350);
 }
 
 async function removePhoto(pid){
@@ -1522,14 +1525,7 @@ async function removePhoto(pid){
   render();
 }
 
-async function handlePhotoSelection(e){
-  const input = e.target;
-  const selectedFiles = Array.from(input.files||[]);
-  if(!selectedFiles.length){
-    input.value = '';
-    if(state.modalOpen) setPhotoPickerStatus('沒有收到照片，請再試一次或改用「直接拍照」。');
-    return;
-  }
+async function processPhotoSelection(input, selectedFiles){
   const files = selectedFiles.filter(file=>!handledPhotoFiles.has(file));
   if(!files.length) return; // iOS 可能對同一次選取同時送出 input 與 change
   files.forEach(file=>handledPhotoFiles.add(file));
@@ -1539,6 +1535,8 @@ async function handlePhotoSelection(e){
   // 不在這裡用 file.type 過濾，改由瀏覽器實際解碼，避免合法照片被靜默忽略。
   const imageFiles = files;
   photoPickerRequestId++;
+  photoPickerProbeId++;
+  activePhotoPicker = null;
   photoPickerStatus = '';
   photoUploadInProgress += imageFiles.length;
   render();
@@ -1570,10 +1568,42 @@ async function handlePhotoSelection(e){
   if(state.modalOpen && state.form===targetForm) render();
 }
 
+function queuePhotoProbe(input, sourceLabel, requestId=photoPickerRequestId){
+  const probeId = ++photoPickerProbeId;
+  const delays = [0, 100, 250, 500, 900, 1400];
+
+  const probe = async (attempt)=>{
+    if(probeId!==photoPickerProbeId || requestId!==photoPickerRequestId) return;
+    const selectedFiles = Array.from(input.files||[]);
+    if(selectedFiles.length){
+      await processPhotoSelection(input, selectedFiles);
+      return;
+    }
+    if(attempt < delays.length-1){
+      setTimeout(()=>probe(attempt+1), delays[attempt+1]);
+      return;
+    }
+    activePhotoPicker = null;
+    if(state.modalOpen){
+      setPhotoPickerStatus(sourceLabel==='相簿'
+        ? '沒有收到相簿照片，請再試一次，或改用「直接拍照」。'
+        : '沒有收到拍攝照片，請再拍一次。');
+    }
+    // 這裡刻意不清空 input；若 iOS 更晚才補上 FileList，後續事件仍有機會讀到。
+  };
+
+  setTimeout(()=>probe(0), delays[0]);
+}
+
+function handlePhotoSelection(e){
+  const sourceLabel = e.target.id==='cameraFile' ? '相機' : '相簿';
+  queuePhotoProbe(e.target, sourceLabel);
+}
+
 function handlePhotoCancel(e){
-  e.target.value = '';
-  photoPickerRequestId++;
-  if(state.modalOpen) setPhotoPickerStatus('沒有收到照片，請再試一次或改用「直接拍照」。');
+  const sourceLabel = e.target.id==='cameraFile' ? '相機' : '相簿';
+  // iOS 某些版本選到照片仍可能先送出 cancel；延後確認，不能在這裡清空 input。
+  queuePhotoProbe(e.target, sourceLabel);
 }
 
 ['photoFile','cameraFile'].forEach(id=>{
@@ -1581,6 +1611,17 @@ function handlePhotoCancel(e){
   input.addEventListener('input', handlePhotoSelection);
   input.addEventListener('change', handlePhotoSelection);
   input.addEventListener('cancel', handlePhotoCancel);
+});
+
+function resumeActivePhotoProbe(){
+  if(!activePhotoPicker || !state.modalOpen) return;
+  const {input, sourceLabel, requestId} = activePhotoPicker;
+  queuePhotoProbe(input, sourceLabel, requestId);
+}
+
+window.addEventListener('focus', resumeActivePhotoProbe);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible') resumeActivePhotoProbe();
 });
 
 // 縮圖與大圖都從 IndexedDB 讀出來再顯示
