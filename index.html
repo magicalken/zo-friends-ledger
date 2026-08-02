@@ -240,7 +240,7 @@ table.yr th{color:var(--text-dim);font-weight:600;font-size:12px;}
 <div id="app"></div>
 <input type="file" id="importFile" class="hidden-file" accept=".csv,text/csv">
 <input type="file" id="restoreFile" class="hidden-file" accept=".json,.zip,application/json,application/zip">
-<input type="file" id="photoFile" class="hidden-file" accept="image/*,.heic,.heif" multiple>
+<input type="file" id="photoFile" class="hidden-file" accept="image/*,.heic,.heif">
 <script>
 /* ---------------- 資料模型 ---------------- */
 const CAT_ICON = 'data:image/png;base64,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';
@@ -250,7 +250,7 @@ const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
 const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
 const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
 const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 
 const EXPENSE_CATS = [
   {key:'food', label:'餐飲', icon:'🍜'},
@@ -800,6 +800,7 @@ function renderModal(){
           </button>
         </div>
         ${photoUploadInProgress?`<div class="photo-upload-status">正在壓縮並儲存照片，完成後才能建立紀錄…</div>`:''}
+        ${!photoUploadInProgress?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;">iPhone 一次選一張；要加第二張，再按一次「加照片」。</div>`:''}
         ${f.archivedPhotoCount?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;">☁️ 另有 ${f.archivedPhotoCount} 張舊照片已封存至雲端備份</div>`:''}
       </div>
       <div class="sheet-actions">
@@ -1483,9 +1484,14 @@ async function removePhoto(pid){
 }
 
 document.getElementById('photoFile').addEventListener('change', async (e)=>{
-  const files = Array.from(e.target.files||[]);
-  e.target.value = '';
-  if(!files.length || !state.form) return;
+  const input = e.target;
+  const files = Array.from(input.files||[]);
+  if(!files.length){
+    input.value = '';
+    if(state.modalOpen) showToast('沒有選到照片，請再試一次');
+    return;
+  }
+  if(!state.form){ input.value = ''; return; }
   const targetForm = state.form;
   // iPhone 從「照片」或 iCloud 選出的 HEIC 有時不提供 MIME 類型；
   // 不在這裡用 file.type 過濾，改由瀏覽器實際解碼，避免合法照片被靜默忽略。
@@ -1515,6 +1521,8 @@ document.getElementById('photoFile').addEventListener('change', async (e)=>{
       photoUploadInProgress = Math.max(0, photoUploadInProgress-1);
     }
   }
+  // iPhone 的私密取用照片是臨時權限；等讀取與儲存完成後才能清空 input。
+  input.value = '';
   if(state.modalOpen && state.form===targetForm) render();
 });
 
