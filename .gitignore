@@ -1,0 +1,30 @@
+# ⚠️ 這個 repo 是公開的，任何人都看得到。
+# 下面這些是真實帳務與個資，絕對不能推上去。
+
+# 帳務資料與備份檔
+*.csv
+*.xlsx
+*.xls
+*.json
+!manifest.webmanifest
+記帳匯入檔*
+MonnyReport*
+記帳資料_*
+記帳備份_*
+記帳完整備份_*
+
+# 手機截圖（可能拍到帳務畫面）
+IMG_*.PNG
+IMG_*.png
+IMG_*.JPG
+IMG_*.jpg
+messageImage_*
+
+# 開發過程的備份檔
+*.bak
+*.bak-*
+*.backup
+
+# 系統檔
+.DS_Store
+Thumbs.db

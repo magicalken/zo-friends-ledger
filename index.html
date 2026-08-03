@@ -92,9 +92,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 html.modal-open{overflow:hidden;}
 body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;background:var(--bg);}
+/* hero 高度：等同原本 aspect-ratio 420/245 夾在 220~280px 之間的結果，純 CSS 算不需 JS 量測 */
+:root{--hero-h:clamp(220px, calc(min(100vw, 480px) * 245 / 420), 280px);}
 .header{position:relative;color:#fff;}
-.hero-header{padding:0;overflow:hidden;aspect-ratio:420/245;min-height:220px;max-height:280px;
-  background:#fff;border-bottom:3px solid #171717;}
+.hero-header{padding:0;overflow:hidden;height:var(--hero-h);
+  background:#fff;border-bottom:3px solid #171717;
+  position:fixed;top:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;z-index:0;}
 .hero-art{width:100%;height:100%;display:block;object-fit:cover;object-position:52% 47%;}
 .hero-brand{position:absolute;left:16px;top:calc(15px + var(--safe-top));padding:8px 13px;background:#050505;color:#fff;
   border:3px solid #fff;border-radius:12px;box-shadow:3px 3px 0 #f4d340;transform:rotate(-1.5deg);
@@ -103,12 +107,41 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .hero-date{position:absolute;right:14px;top:calc(16px + var(--safe-top));padding:6px 10px;background:#f4d340;color:#151515;
   border:3px solid #151515;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.5px;
   transform:rotate(2deg);white-space:nowrap;}
-.main{flex:1;padding:0 14px calc(96px + var(--safe-bottom));margin-top:-16px;}
-.main.view-stats{margin-top:0;padding-top:20px;}
+.main{flex:1;padding:0 14px calc(96px + var(--safe-bottom));
+  margin-top:calc(var(--hero-h) - 16px);
+  position:relative;z-index:1;background:var(--bg);
+  border-radius:20px 20px 0 0;
+  min-height:calc(100vh - var(--hero-h) + 16px);}
+.main.view-stats{margin-top:var(--hero-h);padding-top:20px;}
+/* 內容比畫面短時，讓底部延伸到畫面外，滑動才不會露出 hero 後方 */
+.main::after{content:'';display:block;height:1px;}
 @media(max-width:360px){
   .hero-brand{left:12px;top:calc(12px + var(--safe-top));padding:7px 10px;font-size:15px;}
   .hero-date{right:10px;top:calc(13px + var(--safe-top));padding:5px 8px;font-size:11.5px;}
 }
+/* 搜尋 */
+.search-btn{background:var(--primary-light);border:none;color:var(--primary-dark);width:34px;height:34px;
+  border-radius:50%;font-size:15px;line-height:1;margin-left:6px;flex-shrink:0;}
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
+.search-bar input{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;
+  font-size:15px;background:var(--surface);color:var(--text);outline:none;-webkit-appearance:none;}
+.search-bar input:focus{border-color:var(--primary);}
+.search-close{background:none;border:none;color:var(--primary);font-size:14px;font-weight:700;
+  padding:10px 4px;flex-shrink:0;}
+.search-count{font-size:13px;font-weight:700;color:var(--text-dim);padding-bottom:8px;
+  border-bottom:1px solid var(--border);margin-bottom:6px;}
+.tx-date{display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px;font-weight:600;}
+.main.view-search{margin-top:var(--hero-h);padding-top:16px;}
+
+/* 外觀切換 */
+.theme-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.theme-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 4px;
+  border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);}
+.theme-opt.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);}
+.theme-opt-label{font-size:13.5px;font-weight:700;}
+.theme-opt-desc{font-size:10.5px;color:var(--text-dim);line-height:1.3;text-align:center;}
+.theme-opt.active .theme-opt-desc{color:var(--primary-dark);opacity:.8;}
+
 .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;}
 .summary-card{padding:18px 18px 14px;}
 .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -138,7 +171,7 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .btn-outline{background:var(--surface);color:var(--primary);border:1.5px solid var(--primary);width:100%;}
 .btn-ghost{background:var(--bg);color:var(--text);width:100%;}
 .btn-danger{background:var(--surface);color:var(--danger);border:1.5px solid var(--danger);width:100%;}
-.btn-sm{padding:8px 14px;font-size:13px;width:auto;}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;white-space:nowrap;}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
 
 /* bottom nav */
@@ -266,6 +299,15 @@ table.yr th{color:var(--text-dim);font-weight:600;font-size:12px;}
   padding:calc(7px + env(safe-area-inset-top,0px)) 12px 7px;background:#171717;color:#fff;text-align:center;
   font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 </style>
+<script>
+// 這段要在畫面繪製前跑，否則使用者選深色時會先閃一下淺色
+(function(){
+  try{
+    var m = localStorage.getItem('homeLedger_theme');
+    if(m==='dark' || m==='light') document.documentElement.setAttribute('data-theme', m);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div id="offlineBanner" class="offline-banner" hidden>目前離線，仍可照常記帳；恢復網路後會自動更新 App。</div>
@@ -282,7 +324,7 @@ const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
 const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
 const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
 const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 const EXPENSE_CATS = [
   {key:'food', label:'餐飲', icon:'🍜'},
@@ -533,6 +575,7 @@ function render(){
   app.innerHTML = `
     ${renderHeader()}
     <div class="main view-${state.view}">${
+      state.view==='search' ? renderSearch() :
       state.view==='home' ? renderHome() :
       state.view==='stats' ? renderStats() :
       state.view==='data' ? renderData() :
@@ -559,6 +602,96 @@ function renderHeader(){
 function txInMonth(ym){
   return db.transactions.filter(t => ymKey(t.date) === ym);
 }
+// 單筆紀錄的樣板；月份清單與搜尋結果共用，搜尋結果多顯示日期
+/* ---------------- 外觀（跟隨手機／淺色／深色）---------------- */
+const THEME_KEY = 'homeLedger_theme';
+function getThemeMode(){
+  try{
+    const m = localStorage.getItem(THEME_KEY);
+    return (m==='dark'||m==='light') ? m : 'auto';
+  }catch(e){ return 'auto'; }
+}
+function applyTheme(mode){
+  const root = document.documentElement;
+  if(mode==='auto') root.removeAttribute('data-theme');
+  else root.setAttribute('data-theme', mode);
+  // 狀態列顏色跟著換
+  const dark = mode==='dark' || (mode==='auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', dark ? '#191617' : '#171717');
+}
+function setThemeMode(mode){
+  try{
+    if(mode==='auto') localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, mode);
+  }catch(e){}
+  applyTheme(mode);
+  render();
+}
+
+function txItemHtml(t, opts={}){
+  const c = catInfo(t.category);
+  const localPhotos = Array.isArray(t.photos) ? t.photos.length : 0;
+  const archivedPhotos = Number(t.archivedPhotoCount)||0;
+  const photoBadges = `${localPhotos?`<span class="tx-cam">📷${localPhotos>1?localPhotos:''}</span>`:''}${archivedPhotos?`<span class="tx-cam">☁️${archivedPhotos}</span>`:''}`;
+  const dateLine = opts.showDate ? `<span class="tx-date">${t.date.replace(/-/g,'/')}（${weekdayLabel(t.date)}）</span>` : '';
+  return `<div class="tx-item ${t.type}" data-id="${t.id}">
+    <div class="tx-icon">${escapeHtml(c.icon)}</div>
+    <div class="tx-body">
+      <div class="tx-cat">${escapeHtml(c.label)}${photoBadges}</div>
+      ${dateLine}
+      ${t.note ? `<div class="tx-note">${escapeHtml(t.note)}</div>` : ''}
+    </div>
+    <div class="tx-amt ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmtMoney(t.amount)}</div>
+  </div>`;
+}
+
+/* 搜尋：跨所有月份找，比對備註、分類、金額 */
+function searchTransactions(q){
+  const kw = q.trim().toLowerCase();
+  if(!kw) return [];
+  const asNum = kw.replace(/[$,]/g,'');
+  const numMatch = /^\d+$/.test(asNum) ? Number(asNum) : null;
+  return db.transactions.filter(t=>{
+    if((t.note||'').toLowerCase().includes(kw)) return true;
+    if(catInfo(t.category).label.toLowerCase().includes(kw)) return true;
+    if(numMatch !== null && String(t.amount).includes(asNum)) return true;
+    return false;
+  }).sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0));
+}
+
+function renderSearch(){
+  const q = state.searchQuery || '';
+  const hits = searchTransactions(q);
+  const LIMIT = 300;
+  const shown = hits.slice(0, LIMIT);
+  const income = hits.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = hits.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+  let body;
+  if(!q.trim()){
+    body = `<div class="empty-state"><span class="big">🔍</span>輸入關鍵字開始找<br>可以找備註、分類或金額</div>`;
+  } else if(!hits.length){
+    body = `<div class="empty-state"><span class="big">🐣</span>找不到「${escapeHtml(q)}」<br>換個關鍵字試試</div>`;
+  } else {
+    body = `
+      <div class="card summary-card">
+        <div class="search-count">找到 ${hits.length.toLocaleString()} 筆${hits.length>LIMIT?`（顯示最近 ${LIMIT} 筆）`:''}</div>
+        <div class="summary-row income"><span>收入合計</span><span class="val">${fmtMoney(income)}</span></div>
+        <div class="summary-row expense"><span>支出合計</span><span class="val">${fmtMoney(expense)}</span></div>
+      </div>
+      ${shown.map(t=>txItemHtml(t,{showDate:true})).join('')}`;
+  }
+
+  return `
+    <div class="search-bar">
+      <input id="searchInput" type="search" placeholder="找備註、分類或金額…" value="${escapeHtml(q)}" autocomplete="off">
+      <button class="search-close" data-act="closeSearch">取消</button>
+    </div>
+    ${body}
+  `;
+}
+
 function renderHome(){
   const txs = txInMonth(state.month).sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
   const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
@@ -576,20 +709,7 @@ function renderHome(){
     listHtml = dateKeys.map(d=>{
       const dayTxs = groups[d];
       const dayNet = dayTxs.reduce((s,t)=> s + (t.type==='income'?t.amount:-t.amount), 0);
-      const items = dayTxs.map(t=>{
-        const c = catInfo(t.category);
-        const localPhotos = Array.isArray(t.photos) ? t.photos.length : 0;
-        const archivedPhotos = Number(t.archivedPhotoCount)||0;
-        const photoBadges = `${localPhotos?`<span class="tx-cam">📷${localPhotos>1?localPhotos:''}</span>`:''}${archivedPhotos?`<span class="tx-cam">☁️${archivedPhotos}</span>`:''}`;
-        return `<div class="tx-item ${t.type}" data-id="${t.id}">
-          <div class="tx-icon">${escapeHtml(c.icon)}</div>
-          <div class="tx-body">
-            <div class="tx-cat">${escapeHtml(c.label)}${photoBadges}</div>
-            ${t.note ? `<div class="tx-note">${escapeHtml(t.note)}</div>` : ''}
-          </div>
-          <div class="tx-amt ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmtMoney(t.amount)}</div>
-        </div>`;
-      }).join('');
+      const items = dayTxs.map(t=>txItemHtml(t)).join('');
       return `<div class="day-group">
         <div class="day-header"><span>${d.slice(5).replace('-','/')}（${weekdayLabel(d)}）</span><span class="${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+':''}${fmtMoney(dayNet)}</span></div>
         ${items}
@@ -603,6 +723,7 @@ function renderHome(){
         <button data-act="prevMonth">‹</button>
         <div class="month-label">${fmtYM(state.month)}</div>
         <button data-act="nextMonth">›</button>
+        <button class="search-btn" data-act="openSearch" aria-label="搜尋紀錄">🔍</button>
       </div>
       <div class="summary-row income"><span>收入</span><span class="val">${fmtMoney(income)}</span></div>
       <div class="summary-row expense"><span>支出</span><span class="val">${fmtMoney(expense)}</span></div>
@@ -797,8 +918,20 @@ function renderSettings(){
       ? '可以安裝到主畫面，之後會像一般 App 一樣開啟'
       : 'iPhone：用 Safari 開啟後，點分享，再選「加入主畫面」');
 
+  const mode = getThemeMode();
+  const themeBtn = (val,label,desc)=>
+    `<button class="theme-opt ${mode===val?'active':''}" data-act="setTheme" data-val="${val}">
+       <span class="theme-opt-label">${label}</span><span class="theme-opt-desc">${desc}</span>
+     </button>`;
+
   return `
     <div class="card">
+      <div class="settings-section-title">外觀</div>
+      <div class="theme-picker">
+        ${themeBtn('auto','跟隨手機','手機切就跟著變')}
+        ${themeBtn('light','淺色','一直亮色')}
+        ${themeBtn('dark','深色','一直暗色')}
+      </div>
       <div class="settings-section-title">App 與離線</div>
       <div class="settings-item">
         <div><div class="lbl">安裝到手機主畫面</div><div class="desc">${installDesc}</div></div>
@@ -1463,6 +1596,25 @@ function attachEvents(){
   if(dateInput){
     dateInput.addEventListener('change', (e)=>{ state.form.date = e.target.value; render(); });
   }
+  const searchInput = document.getElementById('searchInput');
+  if(searchInput){
+    searchInput.addEventListener('input', (e)=>{
+      state.searchQuery = e.target.value;
+      const pos = e.target.selectionStart;
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(()=>{
+        render();
+        // 重畫會換掉輸入框，要把焦點和游標還原，否則打一個字就跳出來
+        const el = document.getElementById('searchInput');
+        if(el){
+          el.focus();
+          try{ el.setSelectionRange(pos,pos); }catch(_){}
+        }
+      }, 180);
+    });
+    if(!searchInput.value) setTimeout(()=>searchInput.focus(), 60);
+  }
+
   const noteInput = document.getElementById('noteInput');
   if(noteInput){
     noteInput.addEventListener('input', (e)=>{ state.form.note = e.target.value; });
@@ -1487,6 +1639,9 @@ function onAction(e){
   const val = el.dataset.val;
   switch(act){
     case 'setView': state.view = val; render(); break;
+    case 'setTheme': setThemeMode(val); break;
+    case 'openSearch': state.view='search'; state.searchQuery=''; render(); break;
+    case 'closeSearch': state.view='home'; state.searchQuery=''; render(); break;
     case 'statsTab': state.statsTab = val; render(); break;
     case 'prevMonth': { let y=Math.floor(state.month/100), m=state.month%100; m--; if(m<=0){m=12;y--;} state.month=y*100+m; render(); break; }
     case 'nextMonth': { let y=Math.floor(state.month/100), m=state.month%100; m++; if(m>12){m=1;y++;} state.month=y*100+m; render(); break; }
@@ -1625,6 +1780,7 @@ function deleteTx(){
 }
 
 // 誤刪救回：刪掉的最後一筆先留著，按「復原」就能救回來
+let searchDebounce = null;
 let lastDeleted = null;
 function showUndoToast(msg){
   const el = document.createElement('div');
@@ -1902,6 +2058,13 @@ window.addEventListener('offline', updateOnlineStatus);
 render();
 updateOnlineStatus();
 registerPWA();
+applyTheme(getThemeMode());
+// 選「跟隨手機」時，手機切換夜覽要即時反應
+try{
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+    if(getThemeMode()==='auto'){ applyTheme('auto'); render(); }
+  });
+}catch(e){}
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().catch(()=>{});
 }
