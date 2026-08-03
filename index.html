@@ -38,6 +38,7 @@
   --toast-bg:#2c2c2c;
   --toast-text:#ffffff;
   --radius:16px;
+  --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
 }
 /* 深色：中性色帶一點主色的紅調，不是純灰；主色與強調色都提亮以維持對比 */
@@ -95,17 +96,18 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .hero-header{padding:0;overflow:hidden;aspect-ratio:420/245;min-height:220px;max-height:280px;
   background:#fff;border-bottom:3px solid #171717;}
 .hero-art{width:100%;height:100%;display:block;object-fit:cover;object-position:52% 47%;}
-.hero-brand{position:absolute;left:16px;top:15px;padding:8px 13px;background:#050505;color:#fff;
+.hero-brand{position:absolute;left:16px;top:calc(15px + var(--safe-top));padding:8px 13px;background:#050505;color:#fff;
   border:3px solid #fff;border-radius:12px;box-shadow:3px 3px 0 #f4d340;transform:rotate(-1.5deg);
   font-size:17px;font-weight:700;letter-spacing:1px;white-space:nowrap;}
 .hero-brand span{color:#f0a3bd;}
-.hero-date{position:absolute;right:14px;top:16px;padding:6px 10px;background:#f4d340;color:#151515;
+.hero-date{position:absolute;right:14px;top:calc(16px + var(--safe-top));padding:6px 10px;background:#f4d340;color:#151515;
   border:3px solid #151515;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.5px;
   transform:rotate(2deg);white-space:nowrap;}
 .main{flex:1;padding:0 14px calc(96px + var(--safe-bottom));margin-top:-16px;}
+.main.view-stats{margin-top:0;padding-top:20px;}
 @media(max-width:360px){
-  .hero-brand{left:12px;top:12px;padding:7px 10px;font-size:15px;}
-  .hero-date{right:10px;top:13px;padding:5px 8px;font-size:11.5px;}
+  .hero-brand{left:12px;top:calc(12px + var(--safe-top));padding:7px 10px;font-size:15px;}
+  .hero-date{right:10px;top:calc(13px + var(--safe-top));padding:5px 8px;font-size:11.5px;}
 }
 .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;}
 .summary-card{padding:18px 18px 14px;}
@@ -141,14 +143,17 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 
 /* bottom nav */
 .tabbar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--card);
-  display:flex;align-items:center;justify-content:space-around;
-  padding:8px 0 calc(8px + var(--safe-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.06);z-index:20;}
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;
+  padding:7px 4px calc(7px + var(--safe-bottom));border-top:1px solid var(--border);
+  box-shadow:0 -2px 12px rgba(0,0,0,.06);z-index:20;}
 .tab-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;
-  color:var(--text-dim);font-size:10.5px;padding:4px 14px;}
+  color:var(--text-dim);font-size:11px;padding:3px 1px 2px;min-width:0;}
 .tab-btn.active{color:var(--primary);font-weight:700;}
-.tab-btn .icon{font-size:20px;}
-.fab{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:28px;
-  border:none;box-shadow:0 4px 14px rgba(236,111,114,.5);margin-top:-30px;display:flex;align-items:center;justify-content:center;}
+.tab-btn .icon{font-size:20px;line-height:1;padding:4px 13px;border-radius:12px;}
+.tab-btn.active .icon{background:var(--primary-light);}
+.fab{width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;font-size:26px;
+  border:3px solid var(--card);box-shadow:0 4px 12px rgba(236,111,114,.32);margin:-24px auto 1px;
+  display:flex;align-items:center;justify-content:center;}
 
 /* modal / sheet */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;display:flex;align-items:flex-end;justify-content:center;
@@ -171,10 +176,12 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   padding:14px;margin-bottom:16px;border:1.5px solid var(--border);}
 .amount-input-wrap .cur{font-size:22px;color:var(--text-dim);margin-right:4px;}
 .amount-input-wrap input{border:none;outline:none;font-size:30px;font-weight:700;width:100%;text-align:right;background:none;color:var(--text);}
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
 .cat-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border:1.5px solid var(--border);
-  border-radius:12px;padding:10px 2px;font-size:11px;color:var(--text);min-width:0;overflow:hidden;}
-.cat-btn span:last-child{max-width:100%;overflow-wrap:anywhere;}
+  border-radius:12px;padding:10px 3px;font-size:12px;line-height:1.35;color:var(--text);min-width:0;min-height:82px;
+  justify-content:center;overflow:hidden;}
+.cat-btn span:last-child{max-width:100%;min-height:32px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;overflow-wrap:anywhere;text-align:center;}
 .cat-btn .ic{font-size:21px;}
 .cat-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);font-weight:700;}
 .cat-btn.cat-add{border-style:dashed;color:var(--primary-dark);background:var(--primary-light);}
@@ -188,10 +195,10 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .category-editor-actions button{border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;}
 .category-editor-actions .cancel{background:var(--track);color:var(--text-dim);}
 .category-editor-actions .save{background:var(--primary);color:#fff;}
-.field-row{display:flex;flex-direction:column;gap:12px;margin-bottom:12px;}
+.field-row{display:flex;flex-direction:column;gap:16px;margin-bottom:16px;}
 .field-row .field{width:100%;}
 .field{flex:1;}
-.field label{font-size:12px;color:var(--text-dim);margin-bottom:5px;display:block;font-weight:600;}
+.field label{font-size:13px;color:var(--text-dim);margin-bottom:6px;display:block;font-weight:700;}
 .field input[type=date],.field input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:14px;background:var(--surface);color:var(--text);}
 .quick-date{display:flex;gap:8px;}
 .quick-date button{flex:1;min-height:44px;border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:9px;font-size:13.5px;color:var(--text-dim);}
@@ -200,10 +207,13 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   border-top:1px solid var(--border);background:var(--bg);}
 
 /* stats */
+.stats-card{padding:18px;margin-bottom:18px;}
+.stats-heading{font-weight:700;font-size:15px;line-height:1.4;margin-bottom:12px;}
 .seg{display:flex;background:var(--track);border-radius:12px;padding:3px;margin-bottom:14px;}
 .seg button{flex:1;border:none;background:none;padding:9px;border-radius:10px;font-weight:700;font-size:13px;color:var(--text-dim);}
 .seg button.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.bar-row{margin-bottom:12px;}
+.bar-row{margin-bottom:16px;}
+.bar-row:last-child{margin-bottom:2px;}
 .bar-row .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;}
 .bar-row .top .lbl{display:flex;align-items:center;gap:6px;font-weight:600;}
 .bar-row .top .amt{color:var(--text-dim);}
@@ -260,8 +270,7 @@ table.yr th{color:var(--text-dim);font-weight:600;font-size:12px;}
 <body>
 <div id="offlineBanner" class="offline-banner" hidden>目前離線，仍可照常記帳；恢復網路後會自動更新 App。</div>
 <div id="app"></div>
-<input type="file" id="importFile" class="hidden-file" accept=".csv,text/csv">
-<input type="file" id="restoreFile" class="hidden-file" accept=".json,.zip,application/json,application/zip">
+<input type="file" id="dataImportFile" class="hidden-file" accept=".csv,.json,.zip,text/csv,application/json,application/zip">
 <input type="file" id="photoFile" class="hidden-file" accept="image/*,.heic,.heif">
 <input type="file" id="cameraFile" class="hidden-file" accept="image/*" capture="environment">
 <script>
@@ -273,7 +282,7 @@ const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
 const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
 const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
 const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 const EXPENSE_CATS = [
   {key:'food', label:'餐飲', icon:'🍜'},
@@ -455,7 +464,7 @@ async function refreshPhotoStats(){
       }
     }
     photoStats = { count: keys.length, bytes, oldCount, oldBytes };
-    if(state.view === 'settings') render();
+    if(state.view === 'data') render();
   }catch(e){ /* 沒有照片或不支援就維持 0 */ }
 }
 
@@ -523,9 +532,10 @@ function render(){
   });
   app.innerHTML = `
     ${renderHeader()}
-    <div class="main">${
+    <div class="main view-${state.view}">${
       state.view==='home' ? renderHome() :
       state.view==='stats' ? renderStats() :
+      state.view==='data' ? renderData() :
       renderSettings()
     }</div>
     ${renderTabbar()}
@@ -663,7 +673,7 @@ function renderStats(){
   }).join('');
 
   return `
-    <div class="card">
+    <div class="card stats-card">
       <div class="month-nav" style="margin-bottom:10px;">
         <button data-act="prevMonth">‹</button>
         <div class="month-label">${fmtYM(state.month)} 分類佔比</div>
@@ -675,13 +685,13 @@ function renderStats(){
       </div>
       ${barsHtml}
     </div>
-    <div class="card">
-      <div style="font-weight:700;font-size:14.5px;margin-bottom:2px;">近 6 個月收支趨勢</div>
+    <div class="card stats-card">
+      <div class="stats-heading">近 6 個月收支趨勢</div>
       <div class="trend-chart">${trendHtml}</div>
       <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>收入</span><span><i class="dot" style="background:var(--danger)"></i>支出</span></div>
     </div>
-    <div class="card">
-      <div style="font-weight:700;font-size:14.5px;margin-bottom:10px;">年度總覽</div>
+    <div class="card stats-card">
+      <div class="stats-heading">年度總覽</div>
       <table class="yr"><thead><tr><th>年</th><th>收入</th><th>支出</th><th>結餘</th></tr></thead><tbody>${yearRows || '<tr><td colspan=4 style="text-align:center;color:var(--text-dim);padding:16px 0;">尚無資料</td></tr>'}</tbody></table>
     </div>
   `;
@@ -710,7 +720,7 @@ function markDataChanged(){
   const fullBackupAt = Number(localStorage.getItem(FULL_BACKUP_KEY)||0);
   localStorage.setItem(DATA_CHANGE_KEY, String(Math.max(Date.now(), fullBackupAt+1)));
 }
-function renderSettings(){
+function renderData(){
   const d = daysSinceBackup();
   const total = db.transactions.length;
   const storeMB = (new Blob([localStorage.getItem(STORAGE_KEY)||'']).size / 1048576).toFixed(2);
@@ -721,32 +731,16 @@ function renderSettings(){
   const oldPhotoCount = photoStats.oldCount;
   const oldPhotoSize = formatStorage(photoStats.oldBytes);
   const canCleanOldPhotos = oldPhotoCount>0 && hasCurrentFullBackup();
-  const standalone = isStandaloneMode();
-  const installDesc = standalone
-    ? '已從主畫面以 App 模式開啟，沒有網路也能使用'
-    : (deferredInstallPrompt
-      ? '可以安裝到主畫面，之後會像一般 App 一樣開啟'
-      : 'iPhone：用 Safari 開啟後，點分享，再選「加入主畫面」');
   const banner = (d===null || d>=14)
     ? `<div class="backup-banner">⚠️ ${d===null?'還沒有備份過':`已經 ${d} 天沒備份`}，建議現在匯出一份備份檔存到雲端或傳給自己。</div>`
     : `<div class="backup-banner backup-ok">✅ ${d===0?'今天':`${d} 天前`}備份過，共 ${total.toLocaleString()} 筆資料。</div>`;
 
   return `
     <div class="card">${banner}
-      <div class="settings-section-title">App 與離線</div>
+      <div class="settings-section-title">匯入與還原</div>
       <div class="settings-item">
-        <div><div class="lbl">安裝到手機主畫面</div><div class="desc">${installDesc}</div></div>
-        <button class="btn btn-outline btn-sm" data-act="installApp" ${standalone?'disabled':''}>${standalone?'已安裝':'安裝說明'}</button>
-      </div>
-      <div class="howto">離線時可以新增、修改、查看與備份資料；資料仍只保存在這支手機，不會自動同步到其他裝置。</div>
-      <div class="settings-section-title">資料匯入</div>
-      <div class="settings-item">
-        <div><div class="lbl">還原備份</div><div class="desc">支援帳務 JSON 或含照片的完整 ZIP 備份</div></div>
-        <button class="btn btn-primary btn-sm" data-act="restoreBackup">選擇備份</button>
-      </div>
-      <div class="settings-item">
-        <div><div class="lbl">從舊記帳 App 匯入</div><div class="desc">選擇「記帳匯入檔.csv」，一次匯入歷史資料</div></div>
-        <button class="btn btn-outline btn-sm" data-act="importCsv">選擇檔案</button>
+        <div><div class="lbl">匯入與還原資料</div><div class="desc">CSV 會合併舊帳務；JSON／ZIP 會在確認後還原備份</div></div>
+        <button class="btn btn-primary btn-sm" data-act="chooseDataFile">選擇檔案</button>
       </div>
       <div class="settings-section-title">備份與匯出</div>
       <div class="settings-item">
@@ -790,7 +784,34 @@ function renderSettings(){
     </div>
     <div class="card" style="font-size:12px;color:var(--text-dim);line-height:1.8;">
       💡 這個 App 的資料只存在這支手機的瀏覽器裡，不會上傳到任何地方。<br>
-      建議每個月匯出一次備份，避免換手機或清瀏覽器資料時遺失紀錄。<br>
+      建議每個月匯出一次完整備份，避免換手機或清瀏覽器資料時遺失紀錄。
+    </div>
+  `;
+}
+
+function renderSettings(){
+  const standalone = isStandaloneMode();
+  const installDesc = standalone
+    ? '已從主畫面以 App 模式開啟，沒有網路也能使用'
+    : (deferredInstallPrompt
+      ? '可以安裝到主畫面，之後會像一般 App 一樣開啟'
+      : 'iPhone：用 Safari 開啟後，點分享，再選「加入主畫面」');
+
+  return `
+    <div class="card">
+      <div class="settings-section-title">App 與離線</div>
+      <div class="settings-item">
+        <div><div class="lbl">安裝到手機主畫面</div><div class="desc">${installDesc}</div></div>
+        <button class="btn btn-outline btn-sm" data-act="installApp" ${standalone?'disabled':''}>${standalone?'已安裝':'安裝說明'}</button>
+      </div>
+      <div class="howto">離線時可以新增、修改、查看與備份資料；資料仍只保存在這支手機，不會自動同步到其他裝置。</div>
+      <div class="settings-section-title">使用提醒</div>
+      <div class="howto">
+        帳務保存在目前這個瀏覽器。換手機、移除網站資料或更換網址前，請先到「資料」完成一次完整備份。
+      </div>
+    </div>
+    <div class="card" style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+      ZO &amp; FRIENDS 家用記帳<br>
       App 版本：${APP_VERSION}
     </div>
   `;
@@ -923,8 +944,8 @@ function renderTabbar(){
     <button class="tab-btn ${state.view==='home'?'active':''}" data-act="setView" data-val="home"><span class="icon">🏠</span>首頁</button>
     <button class="tab-btn ${state.view==='stats'?'active':''}" data-act="setView" data-val="stats"><span class="icon">📊</span>統計</button>
     <button class="fab" data-act="openAdd">＋</button>
+    <button class="tab-btn ${state.view==='data'?'active':''}" data-act="setView" data-val="data"><span class="icon">💾</span>資料</button>
     <button class="tab-btn ${state.view==='settings'?'active':''}" data-act="setView" data-val="settings"><span class="icon">⚙️</span>設定</button>
-    <div style="width:44px"></div>
   </div>`;
 }
 
@@ -1484,8 +1505,7 @@ function onAction(e){
     case 'quickDate': state.form.date = val==='today'? todayStr() : yesterdayStr(); render(); break;
     case 'saveTx': saveTx(); break;
     case 'deleteTx': deleteTx(); break;
-    case 'importCsv': document.getElementById('importFile').click(); break;
-    case 'restoreBackup': document.getElementById('restoreFile').click(); break;
+    case 'chooseDataFile': document.getElementById('dataImportFile').click(); break;
     case 'exportCsv': exportCsv(); break;
     case 'exportBackup': exportBackup(); break;
     case 'shareBackup': shareBackup(); break;
@@ -1807,23 +1827,28 @@ async function openPhotoViewer(pid){
   document.body.appendChild(v);
 }
 
-document.getElementById('importFile').addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=> importCsvText(ev.target.result);
-  reader.readAsText(file, 'utf-8');
-  e.target.value = '';
-});
+async function handleDataImportFile(file){
+  const name = String(file.name||'').toLowerCase();
+  const type = String(file.type||'').toLowerCase();
+  if(name.endsWith('.csv') || type.includes('csv')){
+    importCsvText(await file.text());
+    return;
+  }
+  if(name.endsWith('.json') || name.endsWith('.zip') || type.includes('json') || type.includes('zip')){
+    await restoreBackupFile(file);
+    return;
+  }
+  throw new Error('不支援這個檔案格式，請選擇 CSV、JSON 或 ZIP');
+}
 
-document.getElementById('restoreFile').addEventListener('change', async (e)=>{
+document.getElementById('dataImportFile').addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   e.target.value = '';
   if(!file) return;
   try{
-    await restoreBackupFile(file);
+    await handleDataImportFile(file);
   }catch(err){
-    alert('還原失敗：' + (err && err.message ? err.message : '未知錯誤') + '\n\n原本資料不會被覆蓋。');
+    alert('匯入失敗：' + (err && err.message ? err.message : '未知錯誤') + '\n\n原本資料不會被覆蓋。');
   }
 });
 
