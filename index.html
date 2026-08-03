@@ -142,6 +142,28 @@ body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .theme-opt-desc{font-size:10.5px;color:var(--text-dim);line-height:1.3;text-align:center;}
 .theme-opt.active .theme-opt-desc{color:var(--primary-dark);opacity:.8;}
 
+/* 期間選擇 */
+.period-label{flex:1;min-width:0;background:none;border:none;color:var(--text);font-size:16px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 2px;}
+.period-caret{font-size:11px;color:var(--text-dim);}
+.period-sub{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;
+  color:var(--text-dim);padding-bottom:10px;margin-top:-6px;}
+.period-clear{background:none;border:none;color:var(--primary);font-size:12px;font-weight:700;padding:2px 4px;}
+.sheet.sheet-auto{height:auto;max-height:92dvh;}
+.quick-range{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px;}
+.quick-range button{padding:13px 8px;border:1.5px solid var(--border);border-radius:12px;
+  background:var(--surface);color:var(--text);font-size:14px;font-weight:600;}
+.quick-range button:last-child{grid-column:1 / -1;}
+/* 還沒到日子的紀錄 */
+.tx-item.is-future{opacity:.72;border:1.5px dashed var(--border);box-shadow:none;}
+.future-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;
+  background:var(--track);color:var(--text-dim);font-size:10.5px;font-weight:700;vertical-align:middle;}
+.day-header.future-day{color:var(--text-dim);font-style:italic;}
+.planned-box{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+.planned-title{font-size:12px;color:var(--text-dim);font-weight:700;margin-bottom:6px;}
+.planned-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);padding:3px 0;}
+.planned-row.strong{font-weight:700;color:var(--text);border-top:1px solid var(--border);margin-top:5px;padding-top:7px;}
+
 .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;}
 .summary-card{padding:18px 18px 14px;}
 .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -324,7 +346,7 @@ const FULL_BACKUP_KEY = 'homeLedger_lastFullBackup';
 const PHOTO_CHANGE_KEY = 'homeLedger_lastPhotoChange';
 const DATA_CHANGE_KEY = 'homeLedger_lastDataChange';
 const PHOTO_CLEANUP_PENDING_KEY = 'homeLedger_pendingPhotoCleanup';
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 const EXPENSE_CATS = [
   {key:'food', label:'餐飲', icon:'🍜'},
@@ -519,6 +541,8 @@ let state = {
   editId: null,
   form: null,
   statsTab: 'expense',
+  range: null,             // {from:'YYYY-MM-DD', to:'YYYY-MM-DD'}；null 表示看單月
+  rangePickerOpen: false,
   categoryEditorOpen: false,
   categoryDraftLabel: '',
   categoryDraftIcon: '✨',
@@ -583,6 +607,7 @@ function render(){
     }</div>
     ${renderTabbar()}
     ${state.modalOpen ? renderModal() : ''}
+    ${state.rangePickerOpen ? renderRangePicker() : ''}
   `;
   syncModalScrollLock();
   attachEvents();
@@ -601,6 +626,38 @@ function renderHeader(){
 /* ---------------- Home ---------------- */
 function txInMonth(ym){
   return db.transactions.filter(t => ymKey(t.date) === ym);
+}
+
+/* 目前檢視的期間：有自訂區間就用區間，否則用當月 */
+function monthBounds(ym){
+  const y = Math.floor(ym/100), m = ym%100;
+  const last = new Date(y, m, 0).getDate();
+  const pad = n=>String(n).padStart(2,'0');
+  return { from:`${y}-${pad(m)}-01`, to:`${y}-${pad(m)}-${pad(last)}` };
+}
+function currentPeriod(){
+  if(state.range && state.range.from && state.range.to){
+    const {from, to} = state.range;
+    return from <= to ? {from, to, custom:true} : {from:to, to:from, custom:true};
+  }
+  return { ...monthBounds(state.month), custom:false };
+}
+function txInPeriod(){
+  const {from, to} = currentPeriod();
+  return db.transactions.filter(t => t.date >= from && t.date <= to);
+}
+function fmtDateShort(d){ return d.slice(5).replace('-','/'); }
+function periodLabel(){
+  const p = currentPeriod();
+  if(!p.custom) return fmtYM(state.month);
+  const sameYear = p.from.slice(0,4)===p.to.slice(0,4);
+  return sameYear
+    ? `${p.from.slice(0,4)}/${fmtDateShort(p.from)} – ${fmtDateShort(p.to)}`
+    : `${p.from.replace(/-/g,'/')} – ${p.to.replace(/-/g,'/')}`;
+}
+function periodDays(){
+  const p = currentPeriod();
+  return Math.round((new Date(p.to+'T00:00:00') - new Date(p.from+'T00:00:00'))/86400000) + 1;
 }
 // 單筆紀錄的樣板；月份清單與搜尋結果共用，搜尋結果多顯示日期
 /* ---------------- 外觀（跟隨手機／淺色／深色）---------------- */
@@ -629,16 +686,59 @@ function setThemeMode(mode){
   render();
 }
 
+/* 期間選擇面板：常用區間一鍵切換，也可以自己拉日期 */
+function quickRanges(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const iso = d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const y = now.getFullYear(), m = now.getMonth();
+  const lastOf = (yy,mm)=> new Date(yy, mm+1, 0);
+  return [
+    {key:'thisMonth', label:'本月', from:iso(new Date(y,m,1)), to:iso(lastOf(y,m))},
+    {key:'lastMonth', label:'上個月', from:iso(new Date(y,m-1,1)), to:iso(lastOf(y,m-1))},
+    {key:'last3', label:'近三個月', from:iso(new Date(y,m-2,1)), to:iso(lastOf(y,m))},
+    {key:'thisYear', label:'今年', from:`${y}-01-01`, to:`${y}-12-31`},
+    {key:'toToday', label:'本月到今天', from:iso(new Date(y,m,1)), to:iso(now)},
+  ];
+}
+function renderRangePicker(){
+  const p = currentPeriod();
+  return `
+  <div class="overlay" id="rangeOverlay">
+    <div class="sheet sheet-auto">
+      <div class="sheet-head">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">選擇要看的期間</div>
+      </div>
+      <div class="sheet-scroll">
+        <div class="quick-range">
+          ${quickRanges().map(r=>`<button data-act="setQuickRange" data-val="${r.key}">${r.label}</button>`).join('')}
+        </div>
+        <div class="settings-section-title">自己指定</div>
+        <div class="field-row">
+          <div class="field"><label>從</label><input id="rangeFrom" type="date" value="${p.from}"></div>
+          <div class="field"><label>到</label><input id="rangeTo" type="date" value="${p.to}"></div>
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" data-act="closeRangePicker">取消</button>
+        <button class="btn btn-primary" data-act="applyCustomRange">看這段</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 function txItemHtml(t, opts={}){
   const c = catInfo(t.category);
   const localPhotos = Array.isArray(t.photos) ? t.photos.length : 0;
   const archivedPhotos = Number(t.archivedPhotoCount)||0;
   const photoBadges = `${localPhotos?`<span class="tx-cam">📷${localPhotos>1?localPhotos:''}</span>`:''}${archivedPhotos?`<span class="tx-cam">☁️${archivedPhotos}</span>`:''}`;
   const dateLine = opts.showDate ? `<span class="tx-date">${t.date.replace(/-/g,'/')}（${weekdayLabel(t.date)}）</span>` : '';
-  return `<div class="tx-item ${t.type}" data-id="${t.id}">
+  const isFuture = t.date > todayStr();
+  return `<div class="tx-item ${t.type}${isFuture?' is-future':''}" data-id="${t.id}">
     <div class="tx-icon">${escapeHtml(c.icon)}</div>
     <div class="tx-body">
-      <div class="tx-cat">${escapeHtml(c.label)}${photoBadges}</div>
+      <div class="tx-cat">${escapeHtml(c.label)}${photoBadges}${isFuture?'<span class="future-tag">預定</span>':''}</div>
       ${dateLine}
       ${t.note ? `<div class="tx-note">${escapeHtml(t.note)}</div>` : ''}
     </div>
@@ -693,10 +793,24 @@ function renderSearch(){
 }
 
 function renderHome(){
-  const txs = txInMonth(state.month).sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
+  const txs = txInPeriod().sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
+  const today = todayStr();
   const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const net = income - expense;
+  const custom = currentPeriod().custom;
+
+  // 先記起來、還沒到日子的帳要分開看，否則會以為錢已經花掉了
+  const planned = txs.filter(t=>t.date > today);
+  const plannedExpense = planned.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const plannedIncome = planned.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const plannedHtml = planned.length ? `
+      <div class="planned-box">
+        <div class="planned-title">其中 ${planned.length} 筆是之後才發生</div>
+        ${plannedExpense?`<div class="planned-row"><span>預定支出</span><span class="neg">${fmtMoney(plannedExpense)}</span></div>`:''}
+        ${plannedIncome?`<div class="planned-row"><span>預定收入</span><span class="pos">${fmtMoney(plannedIncome)}</span></div>`:''}
+        <div class="planned-row strong"><span>目前實際已${expense-plannedExpense>=0?'花':'花'}</span><span class="neg">${fmtMoney(expense-plannedExpense)}</span></div>
+      </div>` : '';
 
   const groups = {};
   txs.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
@@ -711,7 +825,7 @@ function renderHome(){
       const dayNet = dayTxs.reduce((s,t)=> s + (t.type==='income'?t.amount:-t.amount), 0);
       const items = dayTxs.map(t=>txItemHtml(t)).join('');
       return `<div class="day-group">
-        <div class="day-header"><span>${d.slice(5).replace('-','/')}（${weekdayLabel(d)}）</span><span class="${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+':''}${fmtMoney(dayNet)}</span></div>
+        <div class="day-header ${d>today?'future-day':''}"><span>${d.slice(5).replace('-','/')}（${weekdayLabel(d)}）${d>today?' · 未到':''}</span><span class="${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+':''}${fmtMoney(dayNet)}</span></div>
         ${items}
       </div>`;
     }).join('');
@@ -720,14 +834,16 @@ function renderHome(){
   return `
     <div class="card summary-card">
       <div class="month-nav">
-        <button data-act="prevMonth">‹</button>
-        <div class="month-label">${fmtYM(state.month)}</div>
-        <button data-act="nextMonth">›</button>
+        ${custom?'':`<button data-act="prevMonth">‹</button>`}
+        <button class="period-label" data-act="openRangePicker">${periodLabel()}<span class="period-caret">▾</span></button>
+        ${custom?'':`<button data-act="nextMonth">›</button>`}
         <button class="search-btn" data-act="openSearch" aria-label="搜尋紀錄">🔍</button>
       </div>
+      ${custom?`<div class="period-sub">共 ${periodDays()} 天・${txs.length.toLocaleString()} 筆　<button class="period-clear" data-act="clearRange">回到單月</button></div>`:''}
       <div class="summary-row income"><span>收入</span><span class="val">${fmtMoney(income)}</span></div>
       <div class="summary-row expense"><span>支出</span><span class="val">${fmtMoney(expense)}</span></div>
       <div class="summary-row net"><span>結餘</span><span class="val ${net>=0?'pos':'neg'}">${net>=0?'+':''}${fmtMoney(net)}</span></div>
+      ${plannedHtml}
     </div>
     ${listHtml}
   `;
@@ -736,7 +852,7 @@ function renderHome(){
 /* ---------------- Stats ---------------- */
 function renderStats(){
   const type = state.statsTab;
-  const txs = txInMonth(state.month).filter(t=>t.type===type);
+  const txs = txInPeriod().filter(t=>t.type===type);
   const total = txs.reduce((s,t)=>s+t.amount,0);
   const cats = categoriesFor(type);
   const byCat = {};
@@ -797,7 +913,7 @@ function renderStats(){
     <div class="card stats-card">
       <div class="month-nav" style="margin-bottom:10px;">
         <button data-act="prevMonth">‹</button>
-        <div class="month-label">${fmtYM(state.month)} 分類佔比</div>
+        <div class="month-label">${periodLabel()} 分類佔比</div>
         <button data-act="nextMonth">›</button>
       </div>
       <div class="seg">
@@ -1640,6 +1756,26 @@ function onAction(e){
   switch(act){
     case 'setView': state.view = val; render(); break;
     case 'setTheme': setThemeMode(val); break;
+    case 'openRangePicker': state.rangePickerOpen = true; render(); break;
+    case 'closeRangePicker': state.rangePickerOpen = false; render(); break;
+    case 'clearRange': state.range = null; render(); break;
+    case 'setQuickRange': {
+      const r = quickRanges().find(x=>x.key===val);
+      if(r){
+        const thisM = quickRanges()[0];
+        // 選「本月」就回到單月模式，上下月箭頭才能繼續用
+        if(r.key==='thisMonth'){ state.range = null; state.month = Number(r.from.slice(0,4))*100 + Number(r.from.slice(5,7)); }
+        else state.range = {from:r.from, to:r.to};
+      }
+      state.rangePickerOpen = false; render(); break;
+    }
+    case 'applyCustomRange': {
+      const from = document.getElementById('rangeFrom')?.value;
+      const to = document.getElementById('rangeTo')?.value;
+      if(!from || !to){ showToast('請選擇開始與結束日期'); break; }
+      state.range = {from, to};
+      state.rangePickerOpen = false; render(); break;
+    }
     case 'openSearch': state.view='search'; state.searchQuery=''; render(); break;
     case 'closeSearch': state.view='home'; state.searchQuery=''; render(); break;
     case 'statsTab': state.statsTab = val; render(); break;
