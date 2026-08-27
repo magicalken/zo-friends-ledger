@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zo-friends-ledger-v10';
+const CACHE_NAME = 'zo-friends-ledger-v11';
 const APP_SHELL = [
   './',
   './index.html',
